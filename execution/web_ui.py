@@ -22,7 +22,6 @@ from draft_storage import (
 from generate_post import generate_post_with_hooks, load_knowledge_base, list_templates
 from generate_hooks import generate_hooks
 from post_to_linkedin import post_to_linkedin, check_token_validity
-from push_to_hypefury import create_draft as hypefury_draft
 
 load_dotenv()
 
@@ -228,9 +227,6 @@ HOME_CONTENT = '''{% extends "base.html" %}
                 <form action="/post/{{ draft.id }}" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-success" onclick="return confirm('Post to LinkedIn now?')">Post to LinkedIn</button>
                 </form>
-                <form action="/hypefury/{{ draft.id }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-warning">Send to Hypefury</button>
-                </form>
                 <form action="/delete/{{ draft.id }}" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this draft?')">Delete</button>
                 </form>
@@ -345,9 +341,6 @@ PREVIEW_CONTENT = '''{% extends "base.html" %}
         <form action="/post/{{ draft.id }}" method="POST" style="display:inline;">
             <button type="submit" class="btn btn-success" onclick="return confirm('Post to LinkedIn now?')">Post to LinkedIn</button>
         </form>
-        <form action="/hypefury/{{ draft.id }}" method="POST" style="display:inline;">
-            <button type="submit" class="btn btn-warning">Send to Hypefury</button>
-        </form>
         <a href="/" class="btn btn-secondary">Back to Drafts</a>
     </div>
 </div>
@@ -382,7 +375,6 @@ SETTINGS_CONTENT = '''{% extends "base.html" %}
     <p>Configure these in your <code>.env</code> file:</p>
     <ul style="margin: 15px 0; padding-left: 20px;">
         <li><strong>ANTHROPIC_API_KEY</strong>: {{ 'Set' if anthropic_key else 'Not set' }}</li>
-        <li><strong>HYPEFURY_API_KEY</strong>: {{ 'Set' if hypefury_key else 'Not set' }}</li>
         <li><strong>LINKEDIN_CLIENT_ID</strong>: {{ 'Set' if linkedin_client else 'Not set' }}</li>
         <li><strong>LINKEDIN_CLIENT_SECRET</strong>: {{ 'Set' if linkedin_secret else 'Not set' }}</li>
     </ul>
@@ -566,29 +558,6 @@ async def post_to_li(draft_id: str):
         )
 
 
-@app.post("/hypefury/{draft_id}")
-async def hypefury_route(draft_id: str):
-    draft = get_draft(draft_id)
-    if not draft:
-        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
-
-    final_content = get_final_post(draft_id)
-
-    if draft["selected_hook"] is None and draft["hooks"]:
-        from push_to_hypefury import format_post_with_hooks
-        final_content = format_post_with_hooks(draft["hooks"], draft["content"])
-
-    try:
-        hypefury_draft(final_content)
-        update_draft(draft_id, status="scheduled")
-        return RedirectResponse(url="/?message=Sent+to+Hypefury!&type=success", status_code=303)
-    except Exception as e:
-        return RedirectResponse(
-            url=f"/preview/{draft_id}?message=Hypefury+error:+{str(e)}&type=error",
-            status_code=303
-        )
-
-
 @app.post("/delete/{draft_id}")
 async def delete_route(draft_id: str):
     delete_draft(draft_id)
@@ -606,7 +575,6 @@ async def settings(request: Request, message: str = None, type: str = None):
         "linkedin_status": linkedin_status,
         "kb": kb,
         "anthropic_key": bool(os.getenv("ANTHROPIC_API_KEY")),
-        "hypefury_key": bool(os.getenv("HYPEFURY_API_KEY")),
         "linkedin_client": bool(os.getenv("LINKEDIN_CLIENT_ID")),
         "linkedin_secret": bool(os.getenv("LINKEDIN_CLIENT_SECRET")),
         "message": message,
@@ -631,7 +599,7 @@ async def api_draft(draft_id: str):
 def main():
     print("Starting LinkedIn Draft Manager...")
     print("Open http://localhost:5000 in your browser")
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run("web_ui:app", host="0.0.0.0", port=5000, reload=True)
 
 
 if __name__ == "__main__":
