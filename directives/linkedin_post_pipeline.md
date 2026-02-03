@@ -1,49 +1,127 @@
 # LinkedIn Post Pipeline
 
 ## Overview
-Generate LinkedIn posts with multiple hook options, push to Hypefury as drafts for human review.
+AI-powered LinkedIn content creation with knowledge base integration, draft management, and multi-channel publishing (LinkedIn direct, Hypefury).
 
-## Flow
-1. User generates post body in Claude Project
-2. User pastes body into `create_draft.py`
-3. Script generates 3-5 hook options via Claude API
-4. Script assembles post (hooks at top + body) and pushes to Hypefury drafts
-5. User reviews in Hypefury, picks hook, edits, schedules
-
-## Input
-- Post body text (from Claude Project)
-
-## Output
-- Hypefury draft with format:
+## Architecture
 ```
-[HOOK OPTIONS - delete the ones you don't want]
-A: Hook option 1...
-B: Hook option 2...
-C: Hook option 3...
----
-
-[POST BODY]
-The actual post content...
+Knowledge Base     →   AI Generation   →   Draft Storage   →   Review/Edit   →   Publish
+(origin story,         (Claude API)        (.drafts.json)      (Web UI or      (LinkedIn/
+ best posts,                                                    CLI)            Hypefury)
+ templates)
 ```
 
-## Scripts
-- `execution/create_draft.py` - Main entry point, orchestrates the flow
-- `execution/generate_hooks.py` - Generates hook options via Claude API
-- `execution/push_to_hypefury.py` - Creates draft in Hypefury
-- `execution/prompts.py` - All AI prompts (do not modify without permission)
+## Workflow Options
 
-## Environment Variables
-- `ANTHROPIC_API_KEY` - For Claude API (hook generation)
-- `HYPEFURY_API_KEY` - For Hypefury API
+### Option 1: Web UI (Recommended)
+```bash
+python execution/workflow.py ui
+# Opens http://localhost:5000
+```
+- Create AI posts from topics
+- View and edit drafts
+- Select hooks
+- Post to LinkedIn or Hypefury
 
-## Usage
+### Option 2: CLI
+```bash
+# Generate AI post from topic
+python execution/workflow.py generate "AI coaching and the human element"
+
+# List drafts
+python execution/workflow.py list
+
+# View a draft
+python execution/workflow.py view <draft_id>
+
+# Select a hook
+python execution/workflow.py select <draft_id> B
+
+# Post to LinkedIn
+python execution/workflow.py post <draft_id>
+
+# Send to Hypefury
+python execution/workflow.py hypefury <draft_id>
+```
+
+### Option 3: Legacy (Manual Body)
 ```bash
 python execution/create_draft.py "Your post body here..."
-# or
 python execution/create_draft.py --file post.txt
 ```
 
+## Scripts
+
+### Core Workflow
+- `execution/workflow.py` - Main CLI with all commands
+- `execution/web_ui.py` - Web interface (Flask)
+
+### AI Generation
+- `execution/generate_post.py` - Full post generation using knowledge base
+- `execution/generate_hooks.py` - Hook generation for existing content
+- `execution/prompts.py` - AI prompts (do not modify without permission)
+
+### Storage & Publishing
+- `execution/draft_storage.py` - JSON-based draft management
+- `execution/post_to_linkedin.py` - Direct LinkedIn posting
+- `execution/push_to_hypefury.py` - Hypefury draft creation
+- `execution/linkedin_oauth.py` - LinkedIn OAuth setup (one-time)
+
+## Knowledge Base
+Located in `knowledge_bases/Smiths/Written Posts/`:
+- `Ian Origin Story 2.0.md` - Personal background for authentic content
+- `Smiths Ian Best Performing Posts.md` - Style reference
+- `LI Content Templates.md` - Proven post templates
+
+## Environment Variables
+```bash
+# Required
+ANTHROPIC_API_KEY=     # Claude API for AI generation
+
+# For Hypefury
+HYPEFURY_API_KEY=      # Hypefury API
+
+# For Direct LinkedIn Posting
+LINKEDIN_CLIENT_ID=    # LinkedIn OAuth
+LINKEDIN_CLIENT_SECRET=
+```
+
+## Draft Format
+Drafts are stored in `.drafts.json`:
+```json
+{
+  "id": "abc123",
+  "content": "Post body...",
+  "hooks": ["Hook A...", "Hook B...", ...],
+  "selected_hook": 0,
+  "topic": "AI Coaching",
+  "status": "draft|scheduled|posted",
+  "created_at": "2024-01-01T12:00:00",
+  "updated_at": "2024-01-01T12:00:00"
+}
+```
+
+## First-Time Setup
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Create `.env` file with API keys
+
+3. (Optional) Set up LinkedIn OAuth:
+   ```bash
+   python execution/linkedin_oauth.py
+   ```
+
+4. Start creating:
+   ```bash
+   python execution/workflow.py ui
+   ```
+
 ## Notes
-- Hook generator focuses on scroll-stopping first lines
-- Hooks should match user's voice/style (configure in prompts.py)
-- Hypefury API: https://docs.hypefury.com/api
+- AI generation uses knowledge base for authentic, personalized content
+- Hooks are optimized for scroll-stopping engagement
+- Web UI provides full draft lifecycle management
+- Can publish to both LinkedIn (direct) and Hypefury (scheduled)
