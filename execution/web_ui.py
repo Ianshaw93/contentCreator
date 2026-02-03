@@ -1,5 +1,6 @@
 """
 Web UI for viewing, editing, and scheduling LinkedIn post drafts.
+Built with FastAPI.
 """
 import os
 import sys
@@ -8,8 +9,11 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from flask import Flask, render_template_string, request, redirect, url_for, jsonify
+from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
+import uvicorn
 
 from draft_storage import (
     list_drafts, get_draft, create_draft, update_draft,
@@ -22,10 +26,14 @@ from push_to_hypefury import create_draft as hypefury_draft
 
 load_dotenv()
 
-app = Flask(__name__)
+app = FastAPI(title="LinkedIn Draft Manager")
 
-HTML_TEMPLATE = '''
-<!DOCTYPE html>
+# Create templates directory and set up Jinja2
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+TEMPLATES_DIR.mkdir(exist_ok=True)
+
+# Write the base template
+BASE_TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -48,11 +56,7 @@ HTML_TEMPLATE = '''
         }
         header h1 { font-size: 24px; }
         header p { opacity: 0.9; font-size: 14px; }
-        nav {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
+        nav { display: flex; gap: 15px; margin-top: 15px; }
         nav a {
             color: white;
             text-decoration: none;
@@ -153,11 +157,7 @@ HTML_TEMPLATE = '''
         .alert-info { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-row > div { flex: 1; }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
+        .empty-state { text-align: center; padding: 40px; color: #666; }
         .empty-state p { margin-bottom: 20px; }
         .preview-box {
             background: #f8f9fa;
@@ -168,20 +168,6 @@ HTML_TEMPLATE = '''
             font-size: 14px;
             max-height: 400px;
             overflow-y: auto;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #0077b5;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
@@ -199,24 +185,19 @@ HTML_TEMPLATE = '''
             </nav>
         </div>
     </header>
-
     <div class="container">
         {% if message %}
         <div class="alert alert-{{ message_type or 'info' }}">{{ message }}</div>
         {% endif %}
-
         {% block content %}{% endblock %}
     </div>
 </body>
-</html>
-'''
+</html>'''
 
-HOME_TEMPLATE = '''
-{% extends "base" %}
+HOME_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
     <h2>Your Drafts</h2>
-
     {% if drafts %}
         {% for draft in drafts %}
         <div class="draft-item">
@@ -224,11 +205,7 @@ HOME_TEMPLATE = '''
                 <span class="draft-id">ID: {{ draft.id }}</span>
                 <span class="draft-status status-{{ draft.status }}">{{ draft.status.upper() }}</span>
             </div>
-
-            {% if draft.topic %}
-            <strong>Topic:</strong> {{ draft.topic }}<br><br>
-            {% endif %}
-
+            {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br><br>{% endif %}
             {% if draft.hooks %}
             <strong>Hooks ({{ draft.hooks|length }}):</strong>
             <div style="margin: 10px 0; padding-left: 15px; border-left: 3px solid #0077b5;">
@@ -240,15 +217,11 @@ HOME_TEMPLATE = '''
                 {% endfor %}
             </div>
             {% endif %}
-
             <div class="draft-preview">{{ draft.content[:300] }}{% if draft.content|length > 300 %}...{% endif %}</div>
-
             <div class="draft-meta">
-                Created: {{ draft.created_at[:16] }} |
-                Updated: {{ draft.updated_at[:16] }}
+                Created: {{ draft.created_at[:16] }} | Updated: {{ draft.updated_at[:16] }}
                 {% if draft.template_used %} | Template: {{ draft.template_used }}{% endif %}
             </div>
-
             <div class="draft-actions">
                 <a href="/edit/{{ draft.id }}" class="btn btn-primary">Edit</a>
                 <a href="/preview/{{ draft.id }}" class="btn btn-secondary">Preview</a>
@@ -271,11 +244,9 @@ HOME_TEMPLATE = '''
         </div>
     {% endif %}
 </div>
-{% endblock %}
-'''
+{% endblock %}'''
 
-CREATE_TEMPLATE = '''
-{% extends "base" %}
+CREATE_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="grid-2">
     <div class="card">
@@ -283,34 +254,27 @@ CREATE_TEMPLATE = '''
         <form action="/generate" method="POST">
             <label>Topic / Theme</label>
             <input type="text" name="topic" placeholder="e.g., AI coaching and why human coaches still matter" required>
-
             <label>Additional Context (optional)</label>
             <textarea name="context" rows="3" placeholder="Any specific points, stories, or angles you want included..."></textarea>
-
             <button type="submit" class="btn btn-primary">Generate Post with AI</button>
         </form>
     </div>
-
     <div class="card">
         <h2>Create Manual Draft</h2>
         <form action="/create-manual" method="POST">
             <label>Topic (optional)</label>
             <input type="text" name="topic" placeholder="Topic for reference">
-
             <label>Post Content</label>
             <textarea name="content" placeholder="Write your post content here..." required></textarea>
-
             <label>Generate Hooks?</label>
             <select name="generate_hooks">
                 <option value="yes">Yes - Generate 5 hook options</option>
                 <option value="no">No - Use content as-is</option>
             </select>
-
             <button type="submit" class="btn btn-primary">Create Draft</button>
         </form>
     </div>
 </div>
-
 <div class="card">
     <h2>Available Templates</h2>
     <p style="margin-bottom: 15px;">Reference these proven templates when creating content:</p>
@@ -320,18 +284,15 @@ CREATE_TEMPLATE = '''
         {% endfor %}
     </div>
 </div>
-{% endblock %}
-'''
+{% endblock %}'''
 
-EDIT_TEMPLATE = '''
-{% extends "base" %}
+EDIT_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
     <h2>Edit Draft</h2>
     <form action="/update/{{ draft.id }}" method="POST">
         <label>Topic</label>
         <input type="text" name="topic" value="{{ draft.topic or '' }}">
-
         {% if draft.hooks %}
         <label>Select Hook</label>
         <div style="margin-bottom: 15px;">
@@ -346,10 +307,8 @@ EDIT_TEMPLATE = '''
             {% endfor %}
         </div>
         {% endif %}
-
         <label>Post Content</label>
         <textarea name="content" rows="12">{{ draft.content }}</textarea>
-
         <div class="form-row">
             <div>
                 <label>Status</label>
@@ -360,14 +319,12 @@ EDIT_TEMPLATE = '''
                 </select>
             </div>
         </div>
-
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="/" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
-
 <div class="card">
     <h2>Regenerate Hooks</h2>
     <form action="/regenerate-hooks/{{ draft.id }}" method="POST">
@@ -375,17 +332,14 @@ EDIT_TEMPLATE = '''
         <button type="submit" class="btn btn-secondary">Regenerate Hooks</button>
     </form>
 </div>
-{% endblock %}
-'''
+{% endblock %}'''
 
-PREVIEW_TEMPLATE = '''
-{% extends "base" %}
+PREVIEW_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
     <h2>Post Preview</h2>
     <p style="margin-bottom: 15px;">This is how your post will appear on LinkedIn:</p>
     <div class="preview-box">{{ final_content }}</div>
-
     <div style="margin-top: 20px; display: flex; gap: 10px;">
         <a href="/edit/{{ draft.id }}" class="btn btn-primary">Edit</a>
         <form action="/post/{{ draft.id }}" method="POST" style="display:inline;">
@@ -397,21 +351,18 @@ PREVIEW_TEMPLATE = '''
         <a href="/" class="btn btn-secondary">Back to Drafts</a>
     </div>
 </div>
-
 <div class="card">
     <h2>Draft Details</h2>
     <p><strong>ID:</strong> {{ draft.id }}</p>
     <p><strong>Topic:</strong> {{ draft.topic or 'Not specified' }}</p>
     <p><strong>Status:</strong> {{ draft.status }}</p>
     <p><strong>Created:</strong> {{ draft.created_at }}</p>
-    <p><strong>Selected Hook:</strong> {{ draft.selected_hook + 1 if draft.selected_hook is not none else 'None' }}</p>
+    <p><strong>Selected Hook:</strong> {{ (draft.selected_hook + 1) if draft.selected_hook is not none else 'None' }}</p>
     <p><strong>Character Count:</strong> {{ final_content|length }}</p>
 </div>
-{% endblock %}
-'''
+{% endblock %}'''
 
-SETTINGS_TEMPLATE = '''
-{% extends "base" %}
+SETTINGS_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
     <h2>LinkedIn Connection</h2>
@@ -421,14 +372,11 @@ SETTINGS_TEMPLATE = '''
         {% if linkedin_status.email %} ({{ linkedin_status.email }}){% endif %}
     </div>
     {% else %}
-    <div class="alert alert-error">
-        {{ linkedin_status.error }}
-    </div>
+    <div class="alert alert-error">{{ linkedin_status.error }}</div>
     <p style="margin-top: 15px;">Run this command to authenticate:</p>
     <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">python execution/linkedin_oauth.py</pre>
     {% endif %}
 </div>
-
 <div class="card">
     <h2>API Keys</h2>
     <p>Configure these in your <code>.env</code> file:</p>
@@ -439,7 +387,6 @@ SETTINGS_TEMPLATE = '''
         <li><strong>LINKEDIN_CLIENT_SECRET</strong>: {{ 'Set' if linkedin_secret else 'Not set' }}</li>
     </ul>
 </div>
-
 <div class="card">
     <h2>Knowledge Base</h2>
     <p>Content loaded from: <code>knowledge_bases/Smiths/Written Posts/</code></p>
@@ -449,223 +396,243 @@ SETTINGS_TEMPLATE = '''
         <li>Templates: {{ 'Loaded' if kb.templates else 'Not found' }}</li>
     </ul>
 </div>
-{% endblock %}
-'''
+{% endblock %}'''
+
+# Write templates to files
+def setup_templates():
+    (TEMPLATES_DIR / "base.html").write_text(BASE_TEMPLATE)
+    (TEMPLATES_DIR / "home.html").write_text(HOME_CONTENT)
+    (TEMPLATES_DIR / "create.html").write_text(CREATE_CONTENT)
+    (TEMPLATES_DIR / "edit.html").write_text(EDIT_CONTENT)
+    (TEMPLATES_DIR / "preview.html").write_text(PREVIEW_CONTENT)
+    (TEMPLATES_DIR / "settings.html").write_text(SETTINGS_CONTENT)
+
+setup_templates()
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
-@app.route('/')
-def home():
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request, message: str = None, type: str = None):
     drafts = list_drafts()
-    return render_template_string(
-        HTML_TEMPLATE.replace('{% block content %}{% endblock %}', HOME_TEMPLATE.replace('{% extends "base" %}', '').replace('{% block content %}', '').replace('{% endblock %}', '')),
-        page='home',
-        drafts=drafts,
-        message=request.args.get('message'),
-        message_type=request.args.get('type')
-    )
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "page": "home",
+        "drafts": drafts,
+        "message": message,
+        "message_type": type
+    })
 
 
-@app.route('/create')
-def create_page():
-    templates = list_templates()
-    return render_template_string(
-        HTML_TEMPLATE.replace('{% block content %}{% endblock %}', CREATE_TEMPLATE.replace('{% extends "base" %}', '').replace('{% block content %}', '').replace('{% endblock %}', '')),
-        page='create',
-        templates=templates,
-        message=request.args.get('message'),
-        message_type=request.args.get('type')
-    )
+@app.get("/create", response_class=HTMLResponse)
+async def create_page(request: Request, message: str = None, type: str = None):
+    template_list = list_templates()
+    return templates.TemplateResponse("create.html", {
+        "request": request,
+        "page": "create",
+        "templates": template_list,
+        "message": message,
+        "message_type": type
+    })
 
 
-@app.route('/generate', methods=['POST'])
-def generate():
-    topic = request.form['topic']
-    context = request.form.get('context', '')
-
+@app.post("/generate")
+async def generate(topic: str = Form(...), context: str = Form("")):
     try:
         kb = load_knowledge_base()
         body, hooks = generate_post_with_hooks(topic, kb)
-
-        draft = create_draft(
-            content=body,
-            hooks=hooks,
-            topic=topic
+        draft = create_draft(content=body, hooks=hooks, topic=topic)
+        return RedirectResponse(
+            url=f"/edit/{draft['id']}?message=Post+generated+successfully!&type=success",
+            status_code=303
+        )
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/create?message=Error+generating+post:+{str(e)}&type=error",
+            status_code=303
         )
 
-        return redirect(url_for('edit', draft_id=draft['id'], message='Post generated successfully!', type='success'))
-    except Exception as e:
-        return redirect(url_for('create_page', message=f'Error generating post: {str(e)}', type='error'))
 
-
-@app.route('/create-manual', methods=['POST'])
-def create_manual():
-    topic = request.form.get('topic', '')
-    content = request.form['content']
-    gen_hooks = request.form.get('generate_hooks', 'no') == 'yes'
-
+@app.post("/create-manual")
+async def create_manual(
+    topic: str = Form(""),
+    content: str = Form(...),
+    generate_hooks_opt: str = Form("no", alias="generate_hooks")
+):
     hooks = []
-    if gen_hooks:
+    if generate_hooks_opt == "yes":
         try:
             hooks = generate_hooks(content)
-        except Exception as e:
-            pass  # Continue without hooks if generation fails
+        except Exception:
+            pass
 
-    draft = create_draft(
-        content=content,
-        hooks=hooks,
-        topic=topic
-    )
-
-    return redirect(url_for('home', message='Draft created!', type='success'))
+    draft = create_draft(content=content, hooks=hooks, topic=topic)
+    return RedirectResponse(url="/?message=Draft+created!&type=success", status_code=303)
 
 
-@app.route('/edit/<draft_id>')
-def edit(draft_id):
+@app.get("/edit/{draft_id}", response_class=HTMLResponse)
+async def edit(request: Request, draft_id: str, message: str = None, type: str = None):
     draft = get_draft(draft_id)
     if not draft:
-        return redirect(url_for('home', message='Draft not found', type='error'))
+        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
 
-    return render_template_string(
-        HTML_TEMPLATE.replace('{% block content %}{% endblock %}', EDIT_TEMPLATE.replace('{% extends "base" %}', '').replace('{% block content %}', '').replace('{% endblock %}', '')),
-        page='edit',
-        draft=draft,
-        message=request.args.get('message'),
-        message_type=request.args.get('type')
-    )
+    return templates.TemplateResponse("edit.html", {
+        "request": request,
+        "page": "edit",
+        "draft": draft,
+        "message": message,
+        "message_type": type
+    })
 
 
-@app.route('/update/<draft_id>', methods=['POST'])
-def update(draft_id):
-    updates = {
-        'content': request.form['content'],
-        'topic': request.form.get('topic', ''),
-        'status': request.form.get('status', 'draft'),
-    }
-
-    selected_hook = request.form.get('selected_hook')
-    if selected_hook is not None and selected_hook != '':
-        updates['selected_hook'] = int(selected_hook)
+@app.post("/update/{draft_id}")
+async def update(
+    draft_id: str,
+    content: str = Form(...),
+    topic: str = Form(""),
+    status: str = Form("draft"),
+    selected_hook: str = Form(None)
+):
+    updates = {"content": content, "topic": topic, "status": status}
+    if selected_hook is not None and selected_hook != "":
+        updates["selected_hook"] = int(selected_hook)
 
     update_draft(draft_id, **updates)
-    return redirect(url_for('home', message='Draft updated!', type='success'))
+    return RedirectResponse(url="/?message=Draft+updated!&type=success", status_code=303)
 
 
-@app.route('/regenerate-hooks/<draft_id>', methods=['POST'])
-def regenerate_hooks(draft_id):
+@app.post("/regenerate-hooks/{draft_id}")
+async def regenerate_hooks_route(draft_id: str):
     draft = get_draft(draft_id)
     if not draft:
-        return redirect(url_for('home', message='Draft not found', type='error'))
+        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
 
     try:
-        hooks = generate_hooks(draft['content'])
+        hooks = generate_hooks(draft["content"])
         update_draft(draft_id, hooks=hooks, selected_hook=None)
-        return redirect(url_for('edit', draft_id=draft_id, message='Hooks regenerated!', type='success'))
+        return RedirectResponse(
+            url=f"/edit/{draft_id}?message=Hooks+regenerated!&type=success",
+            status_code=303
+        )
     except Exception as e:
-        return redirect(url_for('edit', draft_id=draft_id, message=f'Error: {str(e)}', type='error'))
+        return RedirectResponse(
+            url=f"/edit/{draft_id}?message=Error:+{str(e)}&type=error",
+            status_code=303
+        )
 
 
-@app.route('/preview/<draft_id>')
-def preview(draft_id):
+@app.get("/preview/{draft_id}", response_class=HTMLResponse)
+async def preview(request: Request, draft_id: str, message: str = None, type: str = None):
     draft = get_draft(draft_id)
     if not draft:
-        return redirect(url_for('home', message='Draft not found', type='error'))
+        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
 
     final_content = get_final_post(draft_id)
+    return templates.TemplateResponse("preview.html", {
+        "request": request,
+        "page": "preview",
+        "draft": draft,
+        "final_content": final_content,
+        "message": message,
+        "message_type": type
+    })
 
-    return render_template_string(
-        HTML_TEMPLATE.replace('{% block content %}{% endblock %}', PREVIEW_TEMPLATE.replace('{% extends "base" %}', '').replace('{% block content %}', '').replace('{% endblock %}', '')),
-        page='preview',
-        draft=draft,
-        final_content=final_content,
-        message=request.args.get('message'),
-        message_type=request.args.get('type')
-    )
 
-
-@app.route('/post/<draft_id>', methods=['POST'])
-def post(draft_id):
+@app.post("/post/{draft_id}")
+async def post_to_li(draft_id: str):
     draft = get_draft(draft_id)
     if not draft:
-        return redirect(url_for('home', message='Draft not found', type='error'))
+        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
 
     final_content = get_final_post(draft_id)
 
     try:
         result = post_to_linkedin(final_content)
-        if result['success']:
-            update_draft(draft_id, status='posted')
-            return redirect(url_for('home', message='Posted to LinkedIn successfully!', type='success'))
+        if result["success"]:
+            update_draft(draft_id, status="posted")
+            return RedirectResponse(
+                url="/?message=Posted+to+LinkedIn+successfully!&type=success",
+                status_code=303
+            )
         else:
-            return redirect(url_for('preview', draft_id=draft_id, message=f'LinkedIn error: {result.get("error", "Unknown error")}', type='error'))
+            error = result.get("error", "Unknown error")
+            return RedirectResponse(
+                url=f"/preview/{draft_id}?message=LinkedIn+error:+{error}&type=error",
+                status_code=303
+            )
     except Exception as e:
-        return redirect(url_for('preview', draft_id=draft_id, message=f'Error: {str(e)}', type='error'))
+        return RedirectResponse(
+            url=f"/preview/{draft_id}?message=Error:+{str(e)}&type=error",
+            status_code=303
+        )
 
 
-@app.route('/hypefury/<draft_id>', methods=['POST'])
-def hypefury(draft_id):
+@app.post("/hypefury/{draft_id}")
+async def hypefury_route(draft_id: str):
     draft = get_draft(draft_id)
     if not draft:
-        return redirect(url_for('home', message='Draft not found', type='error'))
+        return RedirectResponse(url="/?message=Draft+not+found&type=error", status_code=303)
 
     final_content = get_final_post(draft_id)
 
-    # For Hypefury, include hook options if no hook selected
-    if draft['selected_hook'] is None and draft['hooks']:
+    if draft["selected_hook"] is None and draft["hooks"]:
         from push_to_hypefury import format_post_with_hooks
-        final_content = format_post_with_hooks(draft['hooks'], draft['content'])
+        final_content = format_post_with_hooks(draft["hooks"], draft["content"])
 
     try:
-        result = hypefury_draft(final_content)
-        update_draft(draft_id, status='scheduled')
-        return redirect(url_for('home', message='Sent to Hypefury!', type='success'))
+        hypefury_draft(final_content)
+        update_draft(draft_id, status="scheduled")
+        return RedirectResponse(url="/?message=Sent+to+Hypefury!&type=success", status_code=303)
     except Exception as e:
-        return redirect(url_for('preview', draft_id=draft_id, message=f'Hypefury error: {str(e)}', type='error'))
+        return RedirectResponse(
+            url=f"/preview/{draft_id}?message=Hypefury+error:+{str(e)}&type=error",
+            status_code=303
+        )
 
 
-@app.route('/delete/<draft_id>', methods=['POST'])
-def delete(draft_id):
+@app.post("/delete/{draft_id}")
+async def delete_route(draft_id: str):
     delete_draft(draft_id)
-    return redirect(url_for('home', message='Draft deleted', type='success'))
+    return RedirectResponse(url="/?message=Draft+deleted&type=success", status_code=303)
 
 
-@app.route('/settings')
-def settings():
+@app.get("/settings", response_class=HTMLResponse)
+async def settings(request: Request, message: str = None, type: str = None):
     linkedin_status = check_token_validity()
     kb = load_knowledge_base()
 
-    return render_template_string(
-        HTML_TEMPLATE.replace('{% block content %}{% endblock %}', SETTINGS_TEMPLATE.replace('{% extends "base" %}', '').replace('{% block content %}', '').replace('{% endblock %}', '')),
-        page='settings',
-        linkedin_status=linkedin_status,
-        kb=kb,
-        anthropic_key=bool(os.getenv('ANTHROPIC_API_KEY')),
-        hypefury_key=bool(os.getenv('HYPEFURY_API_KEY')),
-        linkedin_client=bool(os.getenv('LINKEDIN_CLIENT_ID')),
-        linkedin_secret=bool(os.getenv('LINKEDIN_CLIENT_SECRET')),
-        message=request.args.get('message'),
-        message_type=request.args.get('type')
-    )
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "page": "settings",
+        "linkedin_status": linkedin_status,
+        "kb": kb,
+        "anthropic_key": bool(os.getenv("ANTHROPIC_API_KEY")),
+        "hypefury_key": bool(os.getenv("HYPEFURY_API_KEY")),
+        "linkedin_client": bool(os.getenv("LINKEDIN_CLIENT_ID")),
+        "linkedin_secret": bool(os.getenv("LINKEDIN_CLIENT_SECRET")),
+        "message": message,
+        "message_type": type
+    })
 
 
-# API endpoints for potential future use
-@app.route('/api/drafts')
-def api_drafts():
-    return jsonify(list_drafts())
+# API endpoints
+@app.get("/api/drafts")
+async def api_drafts():
+    return list_drafts()
 
 
-@app.route('/api/draft/<draft_id>')
-def api_draft(draft_id):
+@app.get("/api/draft/{draft_id}")
+async def api_draft(draft_id: str):
     draft = get_draft(draft_id)
     if draft:
-        return jsonify(draft)
-    return jsonify({'error': 'Not found'}), 404
+        return draft
+    raise HTTPException(status_code=404, detail="Draft not found")
 
 
 def main():
     print("Starting LinkedIn Draft Manager...")
     print("Open http://localhost:5000 in your browser")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=5000)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
