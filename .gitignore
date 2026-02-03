@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.drafts.json
+.linkedin_tokens.json
