@@ -1,5 +1,6 @@
 .tmp/
 .env
+.linkedin_tokens.json
 __pycache__/
 *.pyc
 .venv/
