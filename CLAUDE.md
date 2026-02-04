@@ -1,5 +1,15 @@
 # Agent Instructions
 
+## Related Projects
+
+This is part of a 3-project prospecting/outreach system:
+
+| Project | Path | Purpose |
+|---------|------|---------|
+| **speed_to_lead** | `C:\Users\IanShaw\localProgramming\smiths\speed_to_lead` | Prospecting & lead tracking |
+| **multichannel-outreach** | `C:\Users\IanShaw\localProgramming\smiths\multichannel-outreach` | Messaging & outreach automation |
+| **contentCreator** | `C:\Users\IanShaw\localProgramming\smiths\contentCreator` | Content generation |
+
 3-layer architecture: Directives (what) → Orchestration (you) → Execution (Python scripts)
 
 ## File Structure

@@ -8,7 +8,16 @@
       "Bash(source .env)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(PARTNER_KEY=\"NjhiNGQ1NWItOWFjNi00MDlkLWI2MjktNjhkNTk5OTNkZWQz\":*)"
+      "Bash(PARTNER_KEY=\"NjhiNGQ1NWItOWFjNi00MDlkLWI2MjktNjhkNTk5OTNkZWQz\":*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(cmd.exe /c \"railway status\")",
+      "Bash(cmd.exe /c \"railway whoami\")",
+      "Bash(cmd.exe /c \"railway variables\")",
+      "Bash(pip install:*)",
+      "Bash(ls:*)",
+      "Bash(git push:*)"
     ]
   }
 }
