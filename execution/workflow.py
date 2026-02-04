@@ -2,13 +2,16 @@
 """
 Main workflow script for AI-powered LinkedIn post creation.
 
-Usage:
-    python workflow.py generate "topic"     # Generate a new AI post
-    python workflow.py list                 # List all drafts
-    python workflow.py view <id>            # View a specific draft
-    python workflow.py post <id>            # Post to LinkedIn
-    python workflow.py hypefury <id>        # Send to Hypefury
-    python workflow.py ui                   # Start the web UI
+WORKFLOW:
+    1. python workflow.py hooks "topic"       # Generate hook options
+    2. python workflow.py draft <id> <hook>   # Select hook & generate body
+    3. python workflow.py post <id>           # Post to LinkedIn
+
+OTHER COMMANDS:
+    python workflow.py list                   # List all drafts
+    python workflow.py view <id>              # View a specific draft
+    python workflow.py delete <id>            # Delete a draft
+    python workflow.py ui                     # Start the web UI
 """
 import sys
 import argparse
@@ -21,21 +24,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def cmd_generate(args):
-    """Generate a new AI-powered post."""
-    from generate_post import generate_post_with_hooks, load_knowledge_base
+def cmd_hooks(args):
+    """Step 1: Generate hook options for a topic."""
+    from generate_hooks import generate_hooks
     from draft_storage import create_draft
 
-    print(f"Generating post about: {args.topic}")
-    print("Loading knowledge base...")
+    print(f"Generating hooks for: {args.topic}")
+    if args.context:
+        print(f"Context: {args.context}")
 
-    kb = load_knowledge_base()
-    print("Generating content with AI...")
+    hooks = generate_hooks(args.topic, args.context or "")
 
-    body, hooks = generate_post_with_hooks(args.topic, kb)
-
+    # Create draft with hooks only (no body yet)
     draft = create_draft(
-        content=body,
+        content="",  # Body generated after hook selection
         hooks=hooks,
         topic=args.topic
     )
@@ -46,18 +48,56 @@ def cmd_generate(args):
 
     print("HOOK OPTIONS:")
     for i, hook in enumerate(hooks):
-        print(f"  {chr(65+i)}: {hook}")
+        print(f"  {chr(65+i)}: {hook}\n")
 
-    print(f"\nPOST BODY:")
-    print(body[:500])
-    if len(body) > 500:
-        print("...")
+    print(f"{'='*50}")
+    print(f"Next step - select a hook and generate the post body:")
+    print(f"  python workflow.py draft {draft['id']} A")
+    print(f"  python workflow.py draft {draft['id']} B")
+    print(f"  etc.")
+
+
+def cmd_draft(args):
+    """Step 2: Select a hook and generate the post body."""
+    from generate_post import generate_post_body, load_knowledge_base
+    from draft_storage import get_draft, update_draft
+
+    draft = get_draft(args.id)
+    if not draft:
+        print(f"Draft '{args.id}' not found.")
+        return
+
+    if not draft.get('hooks'):
+        print(f"Draft has no hooks. Run 'workflow.py hooks' first.")
+        return
+
+    hook_idx = ord(args.hook.upper()) - ord('A')
+    if hook_idx < 0 or hook_idx >= len(draft['hooks']):
+        print(f"Invalid hook. Use A-{chr(ord('A') + len(draft['hooks']) - 1)}")
+        return
+
+    selected_hook = draft['hooks'][hook_idx]
+    topic = draft.get('topic', '')
+
+    print(f"Selected hook {args.hook.upper()}: {selected_hook}")
+    print(f"\nGenerating post body...")
+
+    kb = load_knowledge_base()
+    body = generate_post_body(topic, selected_hook, kb)
+
+    # Update draft with body and selected hook
+    update_draft(args.id, content=body, selected_hook=hook_idx)
 
     print(f"\n{'='*50}")
-    print(f"Next steps:")
-    print(f"  - View full draft: python workflow.py view {draft['id']}")
-    print(f"  - Edit in web UI:  python workflow.py ui")
-    print(f"  - Post to LI:      python workflow.py post {draft['id']}")
+    print(f"FULL POST:")
+    print(f"{'='*50}")
+    print(f"{selected_hook}\n")
+    print(body)
+    print(f"{'='*50}")
+    print(f"\nNext steps:")
+    print(f"  - View:    python workflow.py view {args.id}")
+    print(f"  - Post:    python workflow.py post {args.id}")
+    print(f"  - Edit:    python workflow.py ui")
 
 
 def cmd_list(args):
@@ -116,22 +156,6 @@ def cmd_view(args):
     print("=" * 50)
 
 
-def cmd_select_hook(args):
-    """Select a hook for a draft."""
-    from draft_storage import update_draft, get_draft
-
-    draft = get_draft(args.id)
-    if not draft:
-        print(f"Draft '{args.id}' not found.")
-        return
-
-    hook_idx = ord(args.hook.upper()) - ord('A')
-    if hook_idx < 0 or hook_idx >= len(draft.get('hooks', [])):
-        print(f"Invalid hook. Use A-{chr(ord('A') + len(draft['hooks']) - 1)}")
-        return
-
-    update_draft(args.id, selected_hook=hook_idx)
-    print(f"Selected hook {args.hook.upper()} for draft {args.id}")
 
 
 def cmd_post(args):
@@ -171,34 +195,6 @@ def cmd_post(args):
         print(f"\nFailed: {result.get('error', 'Unknown error')}")
 
 
-def cmd_hypefury(args):
-    """Send to Hypefury."""
-    from draft_storage import get_draft, get_final_post, update_draft
-    from push_to_hypefury import create_draft as hypefury_draft, format_post_with_hooks
-
-    draft = get_draft(args.id)
-    if not draft:
-        print(f"Draft '{args.id}' not found.")
-        return
-
-    # Include hook options if none selected
-    if draft.get('selected_hook') is None and draft.get('hooks'):
-        content = format_post_with_hooks(draft['hooks'], draft['content'])
-    else:
-        content = get_final_post(args.id)
-
-    print("Sending to Hypefury...")
-    print(f"Content preview: {content[:100]}...")
-
-    try:
-        result = hypefury_draft(content)
-        update_draft(args.id, status='scheduled')
-        print(f"\nSuccess! Draft created in Hypefury.")
-        print(f"Response: {result}")
-    except Exception as e:
-        print(f"\nFailed: {str(e)}")
-
-
 def cmd_ui(args):
     """Start the web UI."""
     from web_ui import main
@@ -229,22 +225,32 @@ def main():
         description="AI-powered LinkedIn post workflow",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-    %(prog)s generate "AI coaching and why human touch still matters"
+Workflow:
+    1. %(prog)s hooks "AI coaching"           # Generate hooks
+    2. %(prog)s draft abc123 B                # Select hook B, generate body
+    3. %(prog)s post abc123                   # Post to LinkedIn
+
+Other commands:
     %(prog)s list
     %(prog)s view abc123
-    %(prog)s select abc123 B
-    %(prog)s post abc123
+    %(prog)s delete abc123
     %(prog)s ui
         """
     )
 
     subparsers = parser.add_subparsers(dest='command', required=True)
 
-    # Generate
-    gen_parser = subparsers.add_parser('generate', help='Generate a new AI post')
-    gen_parser.add_argument('topic', help='Topic for the post')
-    gen_parser.set_defaults(func=cmd_generate)
+    # Step 1: Generate hooks
+    hooks_parser = subparsers.add_parser('hooks', help='Step 1: Generate hook options for a topic')
+    hooks_parser.add_argument('topic', help='Topic/idea for the post')
+    hooks_parser.add_argument('-c', '--context', help='Optional additional context')
+    hooks_parser.set_defaults(func=cmd_hooks)
+
+    # Step 2: Select hook and generate body
+    draft_parser = subparsers.add_parser('draft', help='Step 2: Select hook and generate post body')
+    draft_parser.add_argument('id', help='Draft ID')
+    draft_parser.add_argument('hook', help='Hook letter (A-E)')
+    draft_parser.set_defaults(func=cmd_draft)
 
     # List
     list_parser = subparsers.add_parser('list', help='List all drafts')
@@ -257,23 +263,12 @@ Examples:
     view_parser.add_argument('id', help='Draft ID')
     view_parser.set_defaults(func=cmd_view)
 
-    # Select hook
-    select_parser = subparsers.add_parser('select', help='Select a hook')
-    select_parser.add_argument('id', help='Draft ID')
-    select_parser.add_argument('hook', help='Hook letter (A-E)')
-    select_parser.set_defaults(func=cmd_select_hook)
-
     # Post to LinkedIn
-    post_parser = subparsers.add_parser('post', help='Post to LinkedIn')
+    post_parser = subparsers.add_parser('post', help='Step 3: Post to LinkedIn')
     post_parser.add_argument('id', help='Draft ID')
     post_parser.add_argument('-y', '--yes', action='store_true',
                             help='Skip confirmation')
     post_parser.set_defaults(func=cmd_post)
-
-    # Send to Hypefury
-    hf_parser = subparsers.add_parser('hypefury', help='Send to Hypefury')
-    hf_parser.add_argument('id', help='Draft ID')
-    hf_parser.set_defaults(func=cmd_hypefury)
 
     # Delete
     del_parser = subparsers.add_parser('delete', help='Delete a draft')

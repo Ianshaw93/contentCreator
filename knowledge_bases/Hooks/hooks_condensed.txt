@@ -1,0 +1,612 @@
+# High-Performing Hook Examples (sorted by hook score)
+Format: [Score] Title | Framework
+------------------------------------------------------------
+[790] What’s the Difference between Socialism, Fascism, and
+    Framework: What’s the Difference between (Similar, polarizing
+[790] Is singing dead?
+    Framework: Is (Common, popular, or ever-present thing) dead?
+[790] The Shortest NBA Player Is Doing The Impossible
+    Framework: The (Underdog) Is Doing The Impossible
+[790] The 4 Methods People Use to Get Rich with Real Estate
+    Framework: The 4 Methods People Use to (Achieve goal) with
+[790] The Most Insane Camera Ever Made.
+    Framework: The Most Insane (Entity) Ever (Action).
+[790] Psychoanalyst's Advice For Young Parents | Erica Komisar
+    Framework: (Authority Figure’s) Advice For (Noobs)
+[790] I Stopped Killing Aloe Vera Once I Knew This
+    Framework: I Stopped (Unwanted Accident) Once I Knew This
+[790] The 8 AI Skills That Will Separate Winners From Losers in
+    Framework: The (Number) (Niche) Skills That Will Separate Winners
+[790] Psychopathic Stalker Goes Before the Wrong Judge
+    Framework: (Polarizing Entity) (Action) the Wrong (Entity)
+[790] A notebook to replace doomscrolling
+    Framework: A (Object) to replace (Problem)
+[790] The Stunt That Ended Buster Keaton's Career
+    Framework: The (Activity) The Ended (Entity)
+[790] If I Wanted to Go From $0 to $1M in 12 Months, Here’s What
+    Framework: If I Wanted to Go From (Starting Point) to (End Goal)
+[790] 7 Signs That Someone Dislikes You and is Hiding it | STOIC
+    Framework: 7 Signs (Negative Occurance) (Concealing Action)
+[790] iOS 18.1 Settings To Turn OFF Now! (Important!)
+    Framework: [Entity] Settings To Turn OFF NOW! (Important)
+[790] This Stupid TRICK Helped Me Play In Every Key On Guitar
+    Framework: This Stupid TRICK Helped Me (Achieve Goal)
+[92] Over 50? Ditch These 5 Summer Fashion Items in 2025!
+    Framework: (Specific audience)? Ditch These 5 (Season) (Entities)
+[92] How Japan escaped Obesity while America got Fat
+    Framework: How (Entity) escaped (Problem) while (Entity)
+[92] 11 Hidden Flight Tricks Airlines are Keeping Quiet About
+    Framework: 11 Hidden (Niche) Tricks (Authorities) are Keeping
+[92] How To Make Drawing 5x Times Easier
+    Framework: How To Make (Activity) 5x Times Easier
+[92] I Went To All 30 MLB Ballparks (Here Are My Rankings)
+    Framework: I Went To All [Entities] (Here Are My Rankings)
+[92] Can I Make a Movie in One Shot?
+    Framework: Can I (Achieve Goal) in One (Try)?
+[92] The New Approach to Personal Branding That Changes
+    Framework: The New Approach to (Activity) That Changes Everything
+[92] The Side of China The Media Won't Show You
+    Framework: The Side of (Polarizing Topic) The Media Won't Show
+[92] Tax Expert Breaks Down Kamala Harris's Tax Plan (FULL
+    Framework: (Industry Professional) Breaks Down (Trending
+[92] How to STUDY so FAST that it feels ILLEGAL😳
+    Framework: How to (Action or Goal) so FAST that it feels ILLEGAL😳
+[68] Every Major Human Mistake That Changed History Forever
+    Framework: Every Major (Negative Event) That Changed (Entity)
+[68] This Winter Is Looking VERY Weird…
+    Framework: (Upcoming entity) Is Looking VERY Weird...
+[68] I built one website 20 times— to find the BEST website
+    Framework: I (Activity) 20 times— to find the BEST (Tool)
+[68] They Promised to Make Social Security Tax-Free — But
+    Framework: They Promised to (Benefit)— But Here’s What They’re
+[68] Don’t Buy a SINGLE Thing at Marshalls Until You Watch
+    Framework: Don’t (Activity) a SINGLE (Entity) at (Place) Until
+[68] Every Major Audio Effect Explained in 8 Minutes!
+    Framework: Every Major (Entity) Explained in (Short Time Frame)!
+[68] We Found a Snake BIGGER Than Titanoboa!
+    Framework: We Found a (Entity) (Extreme comparative adjective)
+[68] Don't Eat Canned Sardines Until You Watch This
+    Framework: Don't (Activity) Until You Watch This
+[68] The Reading Method That Changed My Language Learning
+    Framework: The (Action) Method That Changed My (Desired skill)
+[68] Leonardo da Vinci: The Renaissance Genius Who Changed the
+    Framework: (Person): The (Specific description) Who (Epic action)
+[38] 5 Simple (and kinda weird) Dutch habits to Simplify Your
+    Framework: 5 Simple (and kinda weird) [Specific entity] [Actions
+[38] How I Became a Millionaire on a 9-5 Salary
+    Framework: How I (Achieved Goal) (With Unexpected Constraint)
+[38] 17 WORST Cars That NO ONE Buys According to Consumer
+    Framework: 17 WORST (Entities) That NO ONE (Action) According to
+[38] Hitler's Last Secrets Revealed in Unpublished Archives
+    Framework: (Authority Figure’s) Last (Possession) Revealed in
+[38] What Real Estate Agents DON'T Tell You About Living In
+    Framework: What (Authority Figures) DON'T Tell You About
+[27] They Got It ALL WRONG About Sleeping Bags
+    Framework: They Got It ALL WRONG About (Entities)...
+[27] I took an ""entry level"" CIA test
+    Framework: I took a (""easy"" version of hard thing)
+[27] I Designed a Full Brand Using ONLY ChatGPT, here's what
+    Framework: I (Action) Using ONLY ChatGPT, here's what happened
+[27] They’re Forcing You Out of Your Job—But Not Saying It!
+    Framework: They’re (Controversial action) —But Not Saying It!
+[27] If I Claimed Social Security Again, I’d Do This Instead
+    Framework: If I (Action) Again, I’d Do This Instead
+[27] I Bought Cat Products With No Reviews
+    Framework: I Bought (Niche Products) With No Reviews
+[27] I did Duolingo for 2000 days. Can I speak Spanish?
+    Framework: I did (Activity that people assume works) for (Long
+[27] How to Get Rich in the New Era of A.I. (2025)
+    Framework: How to [Achieve Goal] in the New Era of [Trend].
+[27] Priest Answers: If Someone Confesses A Murder, What Do You
+    Framework: (Authority Figure) Answers: If (Difficult situation),
+[27] 5 things I wish I knew before I started watercolor
+    Framework: 5 things I wish I knew before I started (Activity)
+[27] The ONLY CAMERA you will ever need…
+    Framework: The ONLY (Entity) you will ever need...
+[27] #1 Rule For Calling Deer
+    Framework: #1 Rule For (Activity or Goal)
+[27] How This Supplement Is Changing the Sport of Running
+    Framework: How This (Controversial Entity) Is Changing (Industry)
+[27] When Tennis turns into WAR! (Federer vs Medvedev)
+    Framework: When [Entity] turns into WAR! ([Authority Figure] vs
+[27] 10 things people with Clean Homes do DAILY | Clean Home
+    Framework: 10 things people with (Desirable Possession) do DAILY
+[27] The NEW Highest Paying Small Business Idea JUST FOR WOMEN
+    Framework: The NEW (Desirable Entity) JUST FOR (Specific
+[27] Weeds Are the Answer to Your Garden Problems!
+    Framework: (Unwanted Entities) Are the Answer to Your (Entity)
+[27] The 30-MIN METHOD to ditch 99% of the toys
+    Framework: The (Time Frame) METHOD to ditch 99% of the (Unwanted
+[27] The 7-Day Challenge That Changed My Life (You Can Do It
+    Framework: The 7-Day [Niche] Challenge That Changed My Life (You
+[27] If You Know These 15 Words, Your English is EXCELLENT!
+    Framework: If You (Activity) These 15 (Entities), Your (Skill or
+[9] Dallas Texas Suburbs No One Talks About...But Should!
+    Framework: (Entities) No One Talks About...But Should!
+[9] 10 Common Weeds That Are Actually Expensive Superfoods
+    Framework: 10 Common [Unwanted entities] That Are Actually
+[9] 10 Subtle Signs Of Autism Most Parents Miss
+    Framework: 10 Subtle Signs Of (Entity) Most (Specific audience)
+[9] How Farmers Walks Completely Change The Human Body
+    Framework: How (Activity or thing) Completely Change (Possession)
+[9] 95% Tax on Inherited IRAs and How to AVOID it!
+    Framework: (Problem) and How to AVOID it!
+[9] 6 habits that make a mature woman IRRESISTIBLE – Carl Jung
+    Framework: 6 habits that make a (Specific audience) (Desirable
+[9] Top 7 Beginner Mistakes in Creature Design
+    Framework: Top 7 Beginner Mistakes in (Activity)
+[9] Give me 15 Minutes and I'll Make you Dangerously Confident
+    Framework: Give me 15 Minutes and I'll Make you (Desirable
+[9] ⚠️How to run so fast it feels unnatural 🏃‍♂️⚡💨
+    Framework: ⚠️How to (Do an activity so well) it feels unnatural
+[9] How to DESTROY your exam like it owes you money (by a
+    Framework: How to DESTROY your [Entity] like it owes you money
+[9] 0 IQ LEGO INSTRUCTIONS…
+    Framework: 0 IQ (Entities)...
+[9] Convert ANY Cargo Trailer into a CAMPER in 1 DAY
+    Framework: [Achieve a goal] in [Short time frame]
+[9] I Paid Bakeries $5000 To Recreate AI Cakes!
+    Framework: I Paid (Service providers) (Lots of money) To Recreate
+[9] Every Daily Habit That Destroys Your Brain Explained in 10
+    Framework: Every (Action) That (Unwanted result) Explained in 10
+[9] why do some things just look so good?
+    Framework: why do some (Entities) just (Action) so good?
+[8] Cars Dealers Can’t Sell (August 2025) | It’s Getting Worse
+    Framework: [Entities] [Authority Figures] Can’t [Action]
+[8] Don’t Throw It Away! Here’s How to Save Clothes That Got
+    Framework: Don’t (Expected action)! Here’s How to Save
+[8] Top 10 1960s Protest Songs That Still Resonate Today
+    Framework: Top 10 (Nostalgic, controversial things) That Still
+[8] 7 Best Jobs for People Starting Over
+    Framework: 7 Best (Entities) for (Underdog)
+[8] 2025: The end of our world as we know it | Peter Leyden
+    Framework: (Current or Upcoming Year): The end of (Entity) as we
+[8] “This Is What I Think Of Pete Hegseth” - Jocko Willink
+    Framework: “This Is What I Think Of (Trending or polarizing
+[8] Don't start practicing art before you've done THIS
+    Framework: Don't start (Activity) before you've done THIS
+[8] The One Choice That Will Determine Your Next 5 Years
+    Framework: The One (Action) That Will Determine (Future)
+[8] The SECRET Powder That Makes Plants Grow Faster & Repels
+    Framework: The SECRET (Entity) That (Achieves goal) & (Removes
+[8] Getting ADDICTED to STUDYING is Easy, Actually
+    Framework: Getting ADDICTED to (Beneficial, but hard activity) is
+[8] JOB HOPPING IS DEAD! (YOU SHOULD HAVE BEEN LOYAL!)
+    Framework: [Common Action] IS DEAD! (YOU SHOULD HAVE BEEN
+[8] 7 Habits of Top 1% Women
+    Framework: 7 Habits of Top 1% (Specific audience)
+[8] How Hackers Steal Passwords: 5 Attack Methods Explained
+    Framework: How (Bad guys) (Negative action): 5 (Negative action)
+[8] ACCOUNTANT EXPLAINS: The 6 Levels of Wealth In America
+    Framework: (Authority Figure) EXPLAINS: The 6 Levels of (Entity)
+[8] How To RAISE A CONFIDENT CHILD! Without Forcing THEM Out
+    Framework: How To (Achieve goal)! Without (Unwanted action)
+[8] most popular song each month in the 2020s
+    Framework: most popular (Entity) (In time frame)
+[8] Have Humanoid Robots Gone Too Far?
+    Framework: Have (Polarizing, progressive entity) Gone Too Far?
+[8] This Cut Of Beef Is Better And Cheaper Than Prime Rib!
+    Framework: This (Entity) Is (More desirable) Than (Best current
+[8] You Were the Smart Kid. So Why Do You Feel So Lost Now?
+    Framework: You Were the (Accomplished past state). So Why Do You
+[8] Here's How To Make Your Assets Invisible From Creditors
+    Framework: Here's How To Make Your (Possession) Invisible From
+[8] Is It Still Worth Learning to Code in 2025?
+    Framework: Is It Still Worth (Activity) in (Current Year)?
+[8] 5 Makeup Tricks To Look Younger Instantly
+    Framework: 5 (Activity) Tricks To (Achieve goal) Instantly
+[8] 12 Brutal Truths About Women That Men LEARN Too Late!
+    Framework: 12 Brutal Truths About (Entity) That (Audience) LEARN
+[8] how i use free AI to create viral UGC tiktok ads.
+    Framework: how i use free (Entity) to (Achieve goal).
+[8] How this animation got me a job
+    Framework: How this (Entity) (Helped me achieve a goal)
+[8] Everyone's Saying The Same Thing About The Fantastic Four
+    Framework: Everyone's Saying The Same Thing About (Trending
+[8] Why the Doberman Crushes Every Other Dog Breed
+    Framework: Why (Entity) (Action) Every Other (Entity category)
+[8] if you’ve never been in a relationship, watch this (2025)
+    Framework: if you [Are in an undesirable state], watch this
+[8] They Said It Couldn’t Be Done… But I Built This DIY
+    Framework: They Said It Couldn’t Be Done… But I (Action) Anyway!
+[8] The REALITY of Tech Jobs in 2025
+    Framework: The REALITY of (Polarizing entity) in (Current or
+[8] Man with 200 IQ Explains the Secrets of Reality
+    Framework: (Authority figure) Explains the Secrets of (Entity)
+[8] Texas Judge Can't Believe What Was Said In His Courtroom
+    Framework: (Person) Can’t Believe (Vague, open-ended action)
+[8] What Actually Is Blue Raspberry?
+    Framework: What Actually Is (Commonly known, but slightly
+[8] 8 Vaseline Hacks That Will Change Your Life |
+    Framework: 8 (Specific tool) Hacks That Will Change Your Life
+[8] Top 20 New Technology Trends That Will Define the Future
+    Framework: Top 20 New (Niche) Trends That Will Define the Future
+[8] I Tried 50 Business Ideas. These 3 Made Me Rich…
+    Framework: I Tried (Large Number of Options). These 3 (Achieved
+[8] New Pickleball Rules for 2025 (MUST KNOW)
+    Framework: New [Entities] for [Upcoming Year] (MUST KNOW)
+[8] How Did the Average American Live in Every Decade?
+    Framework: How Did the Average (Entity) (Activity) in Every (Time
+[8] Give Me 9 Minutes, and 2025 Will Be Your Best Year Yet
+    Framework: Give Me (Time Frame), and (You'll Achieve Goal)
+[8] Bought 22 Rental Units and Now I Regret It. Here’s Why…
+    Framework: (Aspirational Action) and Now I Regret It. Here’s Why…
+[8] 12 Habits Of Quietly Wealthy Individuals
+    Framework: 12 Habits Of (Secretly successful) Individuals
+[8] This tent will change backpacking
+    Framework: This (Entity) will change (Niche)
+[8] 20 Celebrities You Didn’t Know Were On The Andy Griffith
+    Framework: 20 (Attractive or interesting entities) You Didn’t
+[8] Why living in Canada has become Impossible
+    Framework: Why (Common thing) has become Impossible
+[8] The Best 25 Minute Exercise Routine For Seniors Over 60
+    Framework: The Best (Time frame) (Action) For (Specific audience)
+[8] Archeologists Uncover How Napoleon Lost At Waterloo
+    Framework: (Authority Figures) Uncover (Explanation of dramatic
+[8] Why do Studios Ignore Blender?
+    Framework: Why do (Authority figures) Ignore (Popular solution)?
+[8] Valorant just got the CRAZIEST Update in History!
+    Framework: (Entity) just got the CRAZIEST Update in History!
+[8] What staying up all night does to your brain - Anna
+    Framework: What (Common, innocent mistake) does to your
+[8] If You FEEL Time Slips Away, Watch This!
+    Framework: If You (Experience Problem), Watch This!
+[8] 15 Signs Your Pregnancy Is Going Well in The First
+    Framework: 15 Signs Your (Journey or Entity) Is Going Well (In
+[8] The future of social media | 2025 trends you NEED to know
+    Framework: The future of (Niche) | (Upcoming or current year)
+[8] If You Hear a Pastor SKIP This Verse... RUN!! (Here's What
+    Framework: If You Hear a (Authority Figure) (Avoid Entity)...
+[8] One Trick to Draw Everyday with Ease
+    Framework: One Trick to (Desirable, but sometimes difficult
+[8] Why Studying Less will Give You an UNFAIR ADVANTAGE
+    Framework: Why (Counterintuitive Statement)
+[8] The 5 Sauces Every Chef Needs to Learn
+    Framework: The (Number) (Entities) Every (Person Who Does
+[8] Why Did LEGENDARY Guitarists Do This?
+    Framework: Why Did LEGENDARY (Professionals) Do This?
+[8] 7 Cybersecurity Tips NOBODY Tells You (but are EASY to do)
+    Framework: 7 [Niche or Activity] Tips NOBODY Tells You (but are
+[8] The Dog Breeds I HATE To Work With As A Dog Trainer!
+    Framework: The (Entities) I HATE To (Activity) As A
+[8] 5 MUST-TRY Crochet Sweater Patterns for Beginners!
+    Framework: 5 MUST-TRY (Activities) for Beginners!
+[8] Something is About to Happen in America (Are You Ready?)
+    Framework: Something is About to Happen in [Niche, place or
+[8] The CHEAPEST Porsche Models You Can AFFORD! (that will go
+    Framework: The CHEAPEST [Desirable, Expensive Entities] You Can
+[8] 10 Mistakes That Make Your Kitchen Look CHEAP
+    Framework: 10 Mistakes That (Cause Unwanted Result)
+[8] Why Men Stopped Wearing Suspenders
+    Framework: Why (Group) Stopped (Popular Thing)
+[8] 7 key things to do AFTER uploading your YouTube video
+    Framework: (Number) key things to do AFTER (Important Activity)
+[8] Jesus Explained the Secret to Being Resilient and Strong
+    Framework: (Authority Figure) Explained the Secret To (Goal)
+[8] Astonishing Historical Events that Aren't Taught in
+    Framework: (Epic Entities) that Aren't Taught in Schools
+[8] My 10 Greatest Air Fryer Recipes of All Time
+    Framework: My 10 Greatest (Entities) of All Time
+[8] Firearms Expert Reacts To S.T.A.L.K.E.R. Franchise Guns
+    Framework: (Niche) Expert Reacts To (Trending Entity)
+[8] 3 Simple Moves to Firm Your Butt and Legs
+    Framework: 3 Simple (Activities) to (Achieve Goal)
+[8] 8 Biggest Scams In Gaming History
+    Framework: (Number) Biggest Scams In (Niche) History
+[8] How I Gained 50,000 Followers In 1 Month (9 Easy Steps)
+    Framework: How I [Achieved Goal] In [Short Time Frame] ([Number]
+[8] An Ancient Roman Shipwreck May Explain the Universe
+    Framework: An (Obscure Entity) May Explain (Bigger Entity)
+[8] 4 Nuts You Should Be Eating And 4 You Shouldn’t
+    Framework: (Number) (Entities) You Should Be (Activity) And
+[8] Why is EVERYONE Leaving Florida? (WHAT'S REALLY GOING ON?)
+    Framework: Why is EVERYONE (Negative Action)? (WHAT'S REALLY
+[8] 5 Habits That Instantly Boost Your Attractiveness
+    Framework: ​​5 Habits That Instantly (Achieve Goal)
+[8] The One-Man-Show Making & Delivering NYC’s Hottest
+    Framework: The (Constraint) (Impressive Activity)
+[8] This Sea Is the Most Mysterious in the World
+    Framework: This (Entity) Is the Most Mysterious in the World
+[8] French Dressing Rules EVERYONE Should Learn Once And For
+    Framework: (Authority) (Activity) Rules EVERYONE Should Learn
+[8] Upcoming Action Sequels You Had No Idea Were Being Made
+    Framework: Upcoming (Entities) You Had No Idea Were (Activity)
+[6] 😮Why EVERYONE is grabbing these HUGE PLANTERS from Dollar
+    Framework: Why EVERYONE is (Activity)!
+[6] The Most Hated Eating Channel on TikTok
+    Framework: The Most Hated (Entity)
+[6] Why Everything in Retirement Changes If You Have a Pension
+    Framework: Why Everything in (Activity) Changes If You (Specific
+[6] This is Why 99% of Amateurs Don't Create Clubhead Speed!
+    Framework: This is Why 99% of Amateurs Don't (Desired activity)!
+[6] What Happens to NEW Cars That Never Sell? Behind the
+    Framework: What Happens to NEW (Entities) That Never (Activity)?
+[6] The Building that Shouldn't Exist: Fort Boyard
+    Framework: The (Entity) that Shouldn't Exist: (Entity name)
+[6] We Cancelled Our Cruise Seconds Before Boarding
+    Framework: We Cancelled Our (Entity) Seconds Before (Starting)
+[6] 50mm & The Biggest Mistake You’re Making
+    Framework: (Entity) & The Biggest Mistake You’re Making
+[6] Priest Ranks Worst Addictions
+    Framework: (Authority Figure) Ranks Worst (Entities)
+[6] Do This Once & Watch How People Treat You Differently
+    Framework: Do This Once & (Observe result)
+[5] Don't Retire Until You Hit These 5 Goals
+    Framework: Don't (Activity) Until You Hit These 5 Goals
+[5] What actually WORKED to Learn FRENCH (No Apps, No Hacks)
+    Framework: What actually WORKED to [Achieve goal] (No [Common,
+[5] This Meal Prep Has 70g of Protein and Tastes Like a Cheat
+    Framework: This (Entity) Has (Benefits)
+[5] God’s Warning: 7 Types of People You Must Not Help
+    Framework: (Authority Figure’s) Warning: 7 Types of (Entities)
+[5] You Need to Be Bored. Here's Why.
+    Framework: You Need to Be (Bad state or action). Here’s Why.
+[5] Hate Talking On Camera for Content? THIS is for YOU
+    Framework: Hate (Beneficial, but difficult action)? THIS is for
+[5] 30 Habits That (Quietly) Changed My Life Forever
+    Framework: 30 Habits That (Quietly) [Achieved Goal]
+[5] Nintendo is ALREADY BANNING Switch 2
+    Framework: (Entity) is ALREADY (Negative Action) (Entity)
+[5] Do Snap Swivels REALLY Hurt Lure Action? (Side-by-Side
+    Framework: Do (Entities) REALLY Hurt (Desired outcome)? ([Proof
+[5] Every Font is Free
+    Framework: Every (Entity) is Free
+[5] You Can Change Your Finances in 6 Months… Here’s How
+    Framework: You Can Change (Possession) in 6 Months… Here’s How
+[5] How I Took Notes in High School (to get STRAIGHT As)
+    Framework: How I [Activity] ([Proof of credibility])
+[5] 8 things I did to stop wasting my evenings after work
+    Framework: 8 things I did to stop (Making specific mistake)
+[5] 15 FORGOTTEN Vegetables Your Grandparents Grew That NEED
+    Framework: 15 FORGOTTEN (Entities) (Old, respected group)
+[5] When Helping An Upset Child, Don’t Talk & Try This Instead
+    Framework: When (Solving a problem), Don’t (Logical activity) &
+[5] Pro Chefs Blind Taste Test Every Box of Frozen Dumplings |
+    Framework: (Professionals) (Unbiased Test) Every
+[5] The Smallest Full Frame Camera You've Ever Seen
+    Framework: The (Extreme, Counterintuitive Object) You've Ever
+[5] These Common Behaviors Are MAJOR TSA Red Flags
+    Framework: These Common (Actions or Entities) Are MAJOR (Entity)
+[5] I Finally Got a Tesla Cybertruck and It Scares the Crap
+    Framework: I Finally Got a (Trending Product) and It Scares the
+[5] Turn a Handkerchief Into a Spectacular Gift in 10 Minutes
+    Framework: Turn a (Mundane Object) Into a (Amazing, Different
+[5] I Sold My $100,000 Cybertruck After 50 Days
+    Framework: I Sold My (Expensive, Cool Object) After 50 Days
+[5] The Laziest AI Side Hustle to Make Money Online in 2024
+    Framework: The Laziest (Trending Opportunity) to (Achieve Goal)
+[5] Women's reaction to unattractive VS handsome men
+    Framework: (Authority Figure)’s reaction to (Undesirable) VS
+[5] Best Updates to Sell an Older Home (Without BREAKING the
+    Framework: Best [Actions] to [Activity] a [Underdog Entity]
+[5] Famous atheists last words before dying..
+    Framework: Famous (Contrarian Figure)’s last (Actions) before
+[4] I Asked ChatGPT to Make Me Money as FAST as Possible
+    Framework: I Asked ChatGPT to (Achieve goal) as FAST as Possible
+[4] The Worst Snake Bites in the US Ranked
+    Framework: The Worst (Entities) Ranked
+[4] SECRET Weapon for a MOLD-FREE Home (It's Not What You
+    Framework: SECRET Weapon for a [Problem]-FREE [Entity] (It's Not
+[4] $500 vs $5,000 vs $50,000 Websites (With Examples)
+    Framework: [Low Price] vs [Mid Price] vs [High Price] [Entities]
+[4] The Feminine Hygiene Routine No One Taught Us
+    Framework: The (Entity) No One Taught Us
+[4] I Investigated The GREEDIEST Things In Video Games
+    Framework: I Investigated The GREEDIEST Things In (Niche)
+[4] Social Media Is About to Change Forever (and nobody even
+    Framework: [Entity] Is About to Change Forever (and nobody even
+[4] The Day the World Changed FOREVER - Hiroshima: Minute by
+    Framework: The Day (Entity) Changed FOREVER - (Entity): Minute by
+[4] 99% Of People STILL Don't Know The Basics Of Prompting
+    Framework: 99% Of People STILL Don't Know The Basics Of (Action
+[4] How to Be So Productive It Feels ILLEGAL (No Motivation
+    Framework: How to Be So [Desirable attribute] It Feels ILLEGAL
+[4] Listening is *the only* skill you need to become fluent
+    Framework: [Activity] is *the only* skill you need to [Achieve
+[4] I Renovated This $1 House (Start to Finish)
+    Framework: I [Activity] This $1 [Entity] (Start to Finish)
+[4] This #1 Golf coach PROVES You’re HITTING driver all
+    Framework: This (Authority Figure) PROVES You’re (Activity) all
+[4] Ex-CIA Officer Reveals 5 Signs Your Phone’s Been Hacked
+    Framework: (Authority Figure) Reveals 5 Signs (Problem has
+[4] 3 Sound Design Secrets That Feel Like CHEATING
+    Framework: 3 (Activity or Niche) Secrets That Feel Like CHEATING
+[4] We Chased Driverless Trucks In Texas. What We Saw Will
+    Framework: We (Investigated new technology). What We Saw Will
+[4] WTF Happened In 1971?
+    Framework: WTF Happened In (Specific time)?
+[4] You Don’t Want Love—You Want to Be Picked So You Feel
+    Framework: You Don’t Want (Desirable entity)—You Want (True
+[4] I Left The U.S. For India And Built A $23M Burrito
+    Framework: I Left (Advantageous place) For (Seemingly less
+[4] 50 Recognizable songs you don't know the name of
+    Framework: 50 Recognizable (Entities) (Counterintuitive
+[4] The GENIUS new shower curtain idea people are using in
+    Framework: The GENIUS new (Entity) idea people are using in
+[4] Beware of The HUGE Medicare Penalty for Selling Your Home
+    Framework: Beware of The HUGE (Problem) for (Activity)
+[4] The ONLY way to become fluent in ENGLISH
+    Framework: The ONLY way to (Achieve Goal)
+[4] Something Strange is Happening in China
+    Framework: Something Strange is Happening in (Entity)
+[4] 🔥 I’m 52 But Feel 32—This Is the Lunch I Eat Every Day
+    Framework: I’m (Actual state) But Feel (Better state)—This Is the
+[4] The NEW Way To Beat Instagram’s Algorithm in 2025
+    Framework: The NEW Way To (Achieve Goal) in (Current Year)
+[4] How Airport Thieves Pick Their Victims (Avoid These
+    Framework: How [Unwanted Things Happen] (Avoid These Mistakes!)
+[4] You’re in a War (and You Don’t Even Know It) | Eric
+    Framework: You’re in a [Bad situation] (and You Don’t Even Know
+[4] 5 Morning Habits That MELT Belly Fat
+    Framework: 5 (Specific time) Habits That (Achieve Goal)
+[4] I tested Suit vs No Suit — Do people treat you
+    Framework: I tested (Option A) vs (Option B) — (Is there a
+[4] the death of personal style
+    Framework: the death of (Polarizing, changing, or declining
+[4] Could this new material replace plastic?
+    Framework: Could this new (Entity) replace (Existing, problematic
+[4] I Tried a 1-Star Cruise
+    Framework: I Tried a (Poorly-rated entity)
+[4] You’re Not Behind: Why Everyone SEEMS To Have More Money
+    Framework: You’re Not (Undesirable State): Why Everyone SEEMS To
+[4] If You’re Creative But Lazy Please Watch This
+    Framework: If You’re (Positive Attribute) But (Undesirable
+[2] Why Earth’s Rotation Speed is Changing
+    Framework: Why (Unchanging thing) is Changing
+[2] 5-Minute No Foundation Makeup With Just 5 Products | Quick
+    Framework: 5-Minute No (Typical, but unwanted tactic) (Activity)
+[2] This One Parking Trick Works EVERY Time.
+    Framework: This One (Activity) Trick Works EVERY Time.
+[2] This Walking Secret Melts Belly Fat After 50 (No Hard
+    Framework: This [Easy activity] Secret [Achieves big goal]
+[2] NEVER Say This in a Job Interview (or You’re DONE)
+    Framework: NEVER [Activity] This in a [High stakes situation] (or
+[2] 5 MAJOR Changes Coming to Downtown San Francisco
+    Framework: 5 MAJOR Changes Coming to (Entity)
+[2] Why Salads Always Taste Better At Restaurants |
+    Framework: Why (Entities) Always (Action) Better At (Place of
+[2] DON'T DONATE your clothes (do this instead)
+    Framework: DON'T [Common, beneficial action] (do this instead)
+[2] 3 simple tips to unlock ChatGPT GENIUS mode…
+    Framework: 3 simple tips to unlock (tool) GENIUS mode...
+[2] 9 Celebrities Who Risked It All to Follow Jesus
+    Framework: 9 Celebrities Who Risked It All to (Action or goal)
+[2] 43 minutes straight of SOLID communication skills advice
+    Framework: (Number) minutes straight of SOLID (Activity) advice
+[2] The Frightening Pagan History of Halloween | Full Special
+    Framework: The Frightening (Negative Description) History of
+[2] The Cruise Rip-Offs Experts NEVER Pay For on a Cruise
+    Framework: The (Niche) Rip-Offs Experts NEVER Pay For (in
+[2] The Blueprint to Make $$$ on YouTube from Day 1
+    Framework: The Blueprint to (Achieve Goal) from Day 1
+[2] I paid 5 designers on Fiverr to create a cover for the
+    Framework: I paid 5 (People who do activity) on Fiverr to create
+[2] Professional Engineer versus the FINAL LEVEL of Poly
+    Framework: (Authority Figure) versus (Game or Alternative
+[2] How to Run Fast at a Low Heart Rate
+    Framework: How to (Achieve Goal) (With Constraint)
+[2] We Put 7 Uber Drivers in One Room. What We Found Will
+    Framework: We (Tangible Action). What We Found Will Shock You.
+[2] The Month You Retire Really Matters
+    Framework: The (Seemingly Insignificant Detail) You (Activity)
+[2] 8 Ways for Seniors to Sleep Better Tonight
+    Framework: 8 Ways for (Specific Audience) to (Solve Specific
+[0] 5 ‘healthy’ habits that kept me fat
+    Framework: 5 ‘(Desirable)’ habits that kept me (Undesirable
+[0] How to STOP a DOG ATTACK in 3 Seconds - GUARANTEED!
+    Framework: How to STOP a (Problem) in (Short time frame) -
+[0] Avoid These 3 Cabinets At ALL Costs
+    Framework: Avoid These 3 (Entities) At ALL Costs
+[0] The Quick Guide to Baseball Pitch Grips
+    Framework: The Quick Guide to (Entities)
+[0] 7 Signs You Are WAY Above Average (Shocking Money Stats!)
+    Framework: 7 Signs You Are WAY Above Average (Shocking [Niche]
+[0] 3 FASHION MISTAKES THAT ARE MAKING YOU LOOK OLDER THAN YOU
+    Framework: 3 (Niche) Mistakes That Are (Causing problem)
+[0] San Antonio’s BEST & WORST Suburbs Ranked
+    Framework: (Entity’s) BEST & WORST (Entities) Ranked
+[0] STOP buying protein bars. Make these instead.
+    Framework: STOP (Action) (Entity). (Action) these instead.
+[0] How much progress have we made on climate change?
+    Framework: How much progress have we made on (Big problem)?
+[0] If you are craving love, God wants you to hear this.
+    Framework: If you are craving (Entity), (Authority figure) wants
+[0] The Best and Worst Royal Caribbean Cruise Ships, Ranked
+    Framework: The Best and Worst (Entities), Ranked
+[0] The 20 BIGGEST Cheating Scandals in Golf History
+    Framework: The 20 BIGGEST Cheating Scandals in (Niche) History
+[0] How we KILLED the Greatest Kind of Vehicle
+    Framework: How we KILLED the Greatest (Entity)
+[0] 10 Things to NEVER HAVE In Your Home When Selling
+    Framework: 10 Things to NEVER (Activity) When (Activity)
+[0] HOW Youtube Changed My Life (in 4 months) | My Journey to
+    Framework: HOW [Entity] Changed My Life (in [Short time frame]) |
+[0] STOP talking about ""going to heaven""
+    Framework: STOP talking about ""(Common Goal or Desire)""
+[0] Career Advice For A World After AI
+    Framework: (Niche) Advice For A World After (World Changing Event
+[0] You are absolutely fluent in English if you can understand
+    Framework: You are absolutely (State of achievement) if you can
+[0] How To Train Yourself To Become A Genius
+    Framework: How To Train Yourself To (Achieve Goal)
+[0] Tech that Died in 2024
+    Framework: (Entities) that Died in (Year that just ended)
+[0] 20 Veggies You Can Plant In December RIGHT NOW!
+    Framework: 20 (Entities) You Can (Activity) In (Current Time)
+[0] ADHD Is a Curse… Until You Learn This
+    Framework: (Problem) Is (Negative Description)… Until You Learn
+[0] These types of women ALWAYS cheat on their men
+    Framework: These types of (Entities) ALWAYS (Negative Action)
+[0] 3 Reasons Why Your Net Worth Explodes After 100K
+    Framework: 3 Reasons Why Your (Possession) (Desirable Change)
+[0] The THREE Most Dangerous People We Will Encounter
+    Framework: The THREE Most Dangerous (Entities) We Will Encounter
+[0] 5 HUGE Mistakes Self-Taught Drummers Make
+    Framework: 5 HUGE Mistakes Self-Taught (Group) Make
+[0] Tennis Has A Serious Pickleball Problem...
+    Framework: (Entity) Has A Serious (Similar Entity) Problem...
+[0] 15 Things To Do If You Get Rich All Of A Sudden
+    Framework: 15 Things To Do If You (Suddenly Reach Your Biggest
+[0] *NEVER* do THIS when visiting Italy!
+    Framework: *NEVER* do THIS when (Activity)!
+[0] Fix 90% of Your Body’s Problems in 30 Days
+    Framework: Fix 90% of Your (Entity’s) Problems in 30 Days
+[0] I think I found the new KING of Budget Home Gym Equipment!
+    Framework: I think I found the new KING of Budget (Product
+[0] These 2 Easy Upgrades Keep Garages Comfy Year Round
+    Framework: These 2 Easy Upgrades (Achieve Specific Goal)
+[0] 10 Years of Mixing Advice in 10 Minutes
+    Framework: 10 Years of (Activity) Advice in 10 Minutes
+[0] I'm 40. If You're In Your 20's Watch This
+    Framework: I'm (Authority Position). If You're (Beginner) Watch
+[0] RETIREMENT REGRETS: Top 5 regrets from elderly (70-80 yrs
+    Framework: (Activity) REGRETS: Top 5 regrets from (Experienced
+[-64] 50 AND FABULOUS: COSY COMFY STYLE FOR WOMEN
+[-70] Scrub Daddy all that? Let's find out!
+[-70] Make This for Your Next Wine Night to Impress Everyone |
+[-71] The 1 Bass Spawning Behavior I DIDN'T Expect (Dock Cam
+[-72] What Happened to the Merrill Lynch Mansion?
+[-73] Why Automakers Can’t Move Factories Overnight
+[-74] Stop Guessing! Use This Cabin Trick to Avoid Scratches
+[-74] My MASSIVE Reptile Enclosure has 23 Animals Preparing for
+[-75] Make This Iconic Sandwich At Home!
+[-75] A Scientist's Guide To Composting
+[-77] What the Forest Taught Me About Gardening
+[-77] These 3 Dressings Will Upgrade Any Salad | Epicurious 101
+[-78] How A Domino's Pizza Mascot Caused A Hostage Situation
+[-80] Are You Feeling Broke? How to Build Real Financial
+[-80] Optimal Order Of Investing For Self-Employed
+[-81] 20 SECRETS In Video Games
+[-82] The Battle Between Elon, Trump & The Left - Naval Ravikant
+[-82] 6 things your (introvert) woman needs you to understand
+[-82] This Guy BROKE The YouTube Algorithm - Here’s What You can
+[-83] Is Waymo About to Dethrone Uber?
+[-83] WARNING: AI Is Stealing People's Homes
+[-87] This Can Make or Break Your Retirement
+[-87] How to Grade Your Dog's Behavior: From F to A
+[-87] How To Clean Your Engine Bay For CHEAP!
+[-88] The Cost of Letting Go, Why Retirement After 60 Is SO Hard
+[-88] It’s Time To Take Your Dreams Seriously - The Alchemist by
+[-89] 10 DEADLY Travel Mistakes NOBODY Is Talking About
+[-89] 15 Strategies For Thriving When Stocks Drop
+[-89] Is AI Making The Dating World Harder to Date?
+[-90] What You NEED To Know About FORGIVENESS In Your 20s
+[-90] 27 Years of No Bullsh*t Sales Advice in 16 Mins
+[-91] Why Tutankhamun's Tomb Is The Biggest Discovery Of All
+[-92] Gore-Tex Sued for Lying to their Customers
+[-92] They Don't Want You To Know This Secret
+[-92] Donating PetSmart Toys to a Cat Cafe
+[-92] Judge DiSanto Calls This Court Case Her “Daily Disaster”
+[-93] Is a Backup Gun Necessary for Self-Defense?
+[-93] Some videos LOOK live, but they're not meant as such. So
+[-94] The ONLY Ecommerce Email Marketing Guide You'll Need
+[-95] A Mother Forgives and ""ADOPTS"" Her Son's MURDERER... (True
+[-95] Large Cruise Ships vs Small Cruise Ships - Which is
+[-96] Chicago Just Guaranteed Vacation Days for Everyone
+[-97] i read 365 self help books, these are the best ones
+[-98] Why Your Body FEELS 10 Years Older Than It Is (And how to
+[-98] 11 Airport Secrets They DON'T Want Us to Know in 2025!
+[-98] Energy Coach Shares 3 Secrets to a Long and Happy Life
+[-99] What It Really Takes To Transform Vehicles Into Homes
+[-99] Back on Icon (Episode 558)
+[-99] 13 DEADLY Mistakes Manual Drivers Make (that Kills Your

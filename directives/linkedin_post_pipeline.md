@@ -1,13 +1,13 @@
 # LinkedIn Post Pipeline
 
 ## Overview
-AI-powered LinkedIn content creation with knowledge base integration, draft management, and multi-channel publishing (LinkedIn direct, Hypefury).
+AI-powered LinkedIn content creation with knowledge base integration, draft management, and direct LinkedIn publishing.
 
 ## Architecture
 ```
 Knowledge Base     →   AI Generation   →   Draft Storage   →   Review/Edit   →   Publish
-(origin story,         (Claude API)        (.drafts.json)      (Web UI or      (LinkedIn/
- best posts,                                                    CLI)            Hypefury)
+(origin story,         (Claude API)        (.drafts.json)      (Web UI or      (LinkedIn)
+ best posts,                                                    CLI)
  templates)
 ```
 
@@ -21,7 +21,7 @@ python execution/workflow.py ui
 - Create AI posts from topics
 - View and edit drafts
 - Select hooks
-- Post to LinkedIn or Hypefury
+- Post directly to LinkedIn
 
 ### Option 2: CLI
 ```bash
@@ -39,9 +39,6 @@ python execution/workflow.py select <draft_id> B
 
 # Post to LinkedIn
 python execution/workflow.py post <draft_id>
-
-# Send to Hypefury
-python execution/workflow.py hypefury <draft_id>
 ```
 
 ### Option 3: Legacy (Manual Body)
@@ -64,7 +61,6 @@ python execution/create_draft.py --file post.txt
 ### Storage & Publishing
 - `execution/draft_storage.py` - JSON-based draft management
 - `execution/post_to_linkedin.py` - Direct LinkedIn posting
-- `execution/push_to_hypefury.py` - Hypefury draft creation
 - `execution/linkedin_oauth.py` - LinkedIn OAuth setup (one-time)
 
 ## Knowledge Base
@@ -77,11 +73,6 @@ Located in `knowledge_bases/Smiths/Written Posts/`:
 ```bash
 # Required
 ANTHROPIC_API_KEY=     # Claude API for AI generation
-
-# For Hypefury
-HYPEFURY_API_KEY=      # Hypefury API
-
-# For Direct LinkedIn Posting
 LINKEDIN_CLIENT_ID=    # LinkedIn OAuth
 LINKEDIN_CLIENT_SECRET=
 ```
@@ -124,4 +115,4 @@ Drafts are stored in `.drafts.json`:
 - AI generation uses knowledge base for authentic, personalized content
 - Hooks are optimized for scroll-stopping engagement
 - Web UI provides full draft lifecycle management
-- Can publish to both LinkedIn (direct) and Hypefury (scheduled)
+- Direct LinkedIn API publishing (no third-party schedulers)

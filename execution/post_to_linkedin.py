@@ -1,5 +1,5 @@
 """
-Post directly to LinkedIn using the LinkedIn API.
+Post directly to LinkedIn using the LinkedIn REST API (Posts API).
 """
 import os
 import json
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN_FILE = Path(__file__).parent.parent / ".linkedin_tokens.json"
-LINKEDIN_API_BASE = "https://api.linkedin.com/v2"
+LINKEDIN_API_VERSION = "202501"
 
 
 def load_tokens() -> dict:
@@ -25,7 +25,7 @@ def load_tokens() -> dict:
 
 def post_to_linkedin(content: str) -> dict:
     """
-    Post content directly to LinkedIn.
+    Post content directly to LinkedIn using the Posts API.
 
     Args:
         content: The post content to publish
@@ -41,27 +41,25 @@ def post_to_linkedin(content: str) -> dict:
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "X-Restli-Protocol-Version": "2.0.0",
+        "LinkedIn-Version": LINKEDIN_API_VERSION,
     }
 
-    # LinkedIn UGC Post API payload
+    # LinkedIn Posts API payload (newer API)
     payload = {
         "author": f"urn:li:person:{person_id}",
-        "lifecycleState": "PUBLISHED",
-        "specificContent": {
-            "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {
-                    "text": content
-                },
-                "shareMediaCategory": "NONE"
-            }
+        "commentary": content,
+        "visibility": "PUBLIC",
+        "distribution": {
+            "feedDistribution": "MAIN_FEED",
+            "targetEntities": [],
+            "thirdPartyDistributionChannels": []
         },
-        "visibility": {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-        }
+        "lifecycleState": "PUBLISHED",
+        "isReshareDisabledByAuthor": False
     }
 
     response = requests.post(
-        f"{LINKEDIN_API_BASE}/ugcPosts",
+        "https://api.linkedin.com/rest/posts",
         headers=headers,
         json=payload
     )
