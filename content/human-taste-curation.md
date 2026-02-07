@@ -6,65 +6,109 @@
 
 ---
 
-## Hook Options (Pick the one that hits)
+## 30 Hook Options (Grounded in Creator Hooks Database Frameworks)
 
-### A.
-AI can write 30 hooks in 60 seconds.
+### [790]-Score Frameworks (Top Tier)
 
-But it can't tell you which one will make someone stop scrolling.
+1. Is AI-generated content dead?
+   *Framework: Is (Common, popular thing) dead?*
 
-### B.
-The most underrated skill in 2025 isn't prompting AI.
+2. The 1 AI skill that will separate winners from losers in 2025 (and it's not prompting)
+   *Framework: The (Number) (Niche) Skills That Will Separate Winners From Losers*
 
-It's knowing which AI output to throw away.
+3. I stopped posting generic AI content once I knew this
+   *Framework: I Stopped (Unwanted Accident) Once I Knew This*
 
-### C.
-Everyone's obsessed with AI replacing jobs.
+4. If I wanted to build a content machine from scratch using AI, here's the one skill I'd learn first
+   *Framework: If I Wanted to Go From (Starting Point) to (End Goal)*
 
-But no one's talking about the one skill AI will never replace: taste.
+5. The most insane content workflow I've ever built (AI writes 30, I pick 1)
+   *Framework: The Most Insane (Entity) Ever (Action)*
 
-### D.
-I use AI to draft 30 hooks for every post.
+6. This stupid trick helped me 10x my content output without losing my voice
+   *Framework: This Stupid TRICK Helped Me (Achieve Goal)*
 
-Then I throw away 29 of them.
+7. What's the difference between someone who uses AI well and someone who doesn't? One word: taste.
+   *Framework: What's the Difference between (Similar, polarizing things)*
 
-That's not a waste. That's the job now.
+### [92]-Score Frameworks
 
-### E.
-Hot take: The people who will win with AI aren't the best prompters.
+8. How to make content creation 10x easier (without sounding like everyone else)
+   *Framework: How To Make (Activity) 5x Times Easier*
 
-They're the ones with the best taste.
+9. The new approach to AI content that changes everything
+   *Framework: The New Approach to (Activity) That Changes Everything*
 
-### F.
-AI made content creation 10x faster.
+10. How to create a week of content so fast it feels illegal
+    *Framework: How to (Action) so FAST that it feels ILLEGAL*
 
-It also made bad content 100x more common.
+### [68]-Score Frameworks
 
-The filter? Human taste.
+11. The curation method that changed my content game forever
+    *Framework: The (Action) Method That Changed My (Desired skill)*
 
-### G.
-Stop trying to remove yourself from the AI loop.
+12. Don't let AI write your content until you've built this one skill
+    *Framework: Don't (Activity) Until You Watch This*
 
-You ARE the loop.
+13. Every major mistake people make with AI content explained in 2 minutes
+    *Framework: Every Major (Entity) Explained in (Short Time Frame)*
 
-### H.
-What people think AI content creation is:
+14. I tested 20 AI content tools — to find the only workflow that actually works
+    *Framework: I (Activity) 20 times — to find the BEST (Tool)*
 
-"Write me a LinkedIn post" → Copy → Paste → Post
+### [38]-Score Frameworks
 
-What it actually is:
+15. What AI content gurus don't tell you about sounding authentic
+    *Framework: What (Authority Figures) DON'T Tell You About*
 
-Generate 30 options → Apply taste → Pick the one that hits → Edit with your voice
+16. How I 10x'd my content output while making every post sound more like me
+    *Framework: How I (Achieved Goal) (With Unexpected Constraint)*
 
-### I.
-The gap between good and great content has never been wider.
+### [27]-Score Frameworks
 
-And it has nothing to do with the tools you use.
+17. 5 things I wish I knew before I started using AI for content
+    *Framework: 5 things I wish I knew before I started (Activity)*
 
-### J.
-I stopped trying to make AI write like me.
+18. #1 rule for using AI to create content (that nobody follows)
+    *Framework: #1 Rule For (Activity or Goal)*
 
-Instead, I made AI generate options so I could curate like me.
+19. The only AI content skill you will ever need
+    *Framework: The ONLY (Entity) you will ever need*
+
+20. How to stand out in the new era of AI content
+    *Framework: How to [Achieve Goal] in the New Era of [Trend]*
+
+### [8]-Score Frameworks
+
+21. 99% of people using AI for content still don't understand curation
+    *Framework: 99% Of People STILL Don't Know The Basics Of (Action)*
+
+22. Why throwing away 90% of what AI writes is the most productive thing you can do
+    *Framework: Why (Counterintuitive Statement)*
+
+23. Content creation is about to change forever (and nobody is talking about the real shift)
+    *Framework: (Entity) Is About to Change Forever (and nobody even notices)*
+
+24. The #1 mistake that makes AI content sound like everyone else's
+    *Framework: 10 Mistakes That (Cause Unwanted Result)*
+
+25. Taste is *the only* skill you need to win with AI content
+    *Framework: [Activity] is *the only* skill you need to [Achieve Goal]*
+
+26. Has AI content creation gone too far?
+    *Framework: Have (Polarizing entity) Gone Too Far?*
+
+27. Is it still worth writing your own content in 2025?
+    *Framework: Is It Still Worth (Activity) in (Current Year)?*
+
+28. I tested 50 AI content workflows. Only 1 consistently produced content that sounded like me.
+    *Framework: I Tried (Large Number). These (Few) (Achieved Goal)*
+
+29. Give me 2 minutes and I'll change how you use AI for content forever
+    *Framework: Give Me (Time Frame), and (You'll Achieve Goal)*
+
+30. AI content is generic and soulless... until you learn this
+    *Framework: (Problem) Is (Negative Description)... Until You Learn This*
 
 ---
 
