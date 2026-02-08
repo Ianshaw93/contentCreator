@@ -10,5 +10,6 @@ env/
 .ideas_bank.json
 .linkedin_tokens.json
 execution/templates/
-.claude/
+.claude/*
+!.claude/skills/
 *.png
