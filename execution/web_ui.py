@@ -15,9 +15,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
+import calendar as cal
+from datetime import datetime as dt
 from dotenv import load_dotenv
 import uvicorn
 import json
@@ -25,8 +27,10 @@ import json
 from draft_storage import (
     list_drafts, get_draft, create_draft, update_draft,
     delete_draft, get_final_post, save_hook_to_bank, get_hooks_bank,
-    delete_hook_from_bank, save_idea_to_bank, get_ideas_bank, delete_idea_from_bank
+    delete_hook_from_bank, save_idea_to_bank, get_ideas_bank, delete_idea_from_bank,
+    list_drafts_by_date, get_drafts_for_date
 )
+from image_storage import save_image, delete_image, list_images, get_image, get_image_url
 from generate_post import generate_post_body, load_knowledge_base
 from generate_hooks import generate_hooks
 from generate_ideas import generate_ideas
@@ -38,6 +42,7 @@ app = FastAPI(title="LinkedIn Content Creator")
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 TEMPLATES_DIR.mkdir(exist_ok=True)
+
 
 # =============================================================================
 # HTML TEMPLATES
@@ -197,11 +202,13 @@ BASE_TEMPLATE = '''<!DOCTYPE html>
             <h1>LinkedIn Content Creator</h1>
             <nav>
                 <a href="/" class="{{ 'active' if page == 'home' else '' }}">Create</a>
+                <a href="/calendar" class="{{ 'active' if page == 'calendar' else '' }}">Calendar</a>
                 <a href="/drafts" class="{{ 'active' if page == 'drafts' else '' }}">Drafts</a>
                 <a href="/scheduled" class="{{ 'active' if page == 'scheduled' else '' }}">Scheduled</a>
                 <a href="/posted" class="{{ 'active' if page == 'posted' else '' }}">Posted</a>
                 <a href="/ideas-bank" class="{{ 'active' if page == 'ideas-bank' else '' }}">Ideas</a>
                 <a href="/hooks-bank" class="{{ 'active' if page == 'hooks-bank' else '' }}">Hooks</a>
+                <a href="/images" class="{{ 'active' if page == 'images' else '' }}">Images</a>
                 <a href="/settings" class="{{ 'active' if page == 'settings' else '' }}">Settings</a>
             </nav>
         </div>
@@ -551,10 +558,16 @@ SCHEDULED_CONTENT = '''{% extends "base.html" %}
                 <span style="font-family: monospace; color: #666;">ID: {{ draft.id }}</span>
                 <span class="status-{{ draft.status }}">{{ draft.status.upper() }}</span>
             </div>
+            {% if draft.scheduled_time %}
+            <div style="background: #cce5ff; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                <strong>Scheduled for:</strong> {{ draft.scheduled_time[:16].replace('T', ' ') }}
+            </div>
+            {% endif %}
             {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br>{% endif %}
             {% if draft.selected_hook is not none and draft.hooks %}
             <strong>Hook:</strong> {{ draft.hooks[draft.selected_hook][:100] }}...<br>
             {% endif %}
+            {% if draft.images %}<strong>Images:</strong> {{ draft.images|length }} attached<br>{% endif %}
             <div class="draft-preview" style="margin-top: 10px;">{{ draft.content[:300] }}{% if draft.content|length > 300 %}...{% endif %}</div>
             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="/edit/{{ draft.id }}" class="btn btn-primary btn-sm">Edit</a>
@@ -588,10 +601,19 @@ POSTED_CONTENT = '''{% extends "base.html" %}
                 <span style="font-family: monospace; color: #666;">ID: {{ draft.id }}</span>
                 <span class="status-{{ draft.status }}">{{ draft.status.upper() }}</span>
             </div>
+            <div style="background: #d4edda; padding: 8px; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <strong>Posted on:</strong>
+                <input type="datetime-local"
+                       id="posted_at_{{ draft.id }}"
+                       value="{{ draft.posted_at[:16] if draft.posted_at else '' }}"
+                       style="padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                <button type="button" class="btn btn-sm btn-primary" onclick="savePostedDate('{{ draft.id }}')">Save Date</button>
+            </div>
             {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br>{% endif %}
             {% if draft.selected_hook is not none and draft.hooks %}
             <strong>Hook:</strong> {{ draft.hooks[draft.selected_hook][:100] }}...<br>
             {% endif %}
+            {% if draft.images %}<strong>Images:</strong> {{ draft.images|length }} attached<br>{% endif %}
             <div class="draft-preview" style="margin-top: 10px;">{{ draft.content[:300] }}{% if draft.content|length > 300 %}...{% endif %}</div>
             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="/preview/{{ draft.id }}" class="btn btn-secondary btn-sm">Preview</a>
@@ -608,6 +630,26 @@ POSTED_CONTENT = '''{% extends "base.html" %}
         <p style="color: #666;">No posted content yet.</p>
     {% endif %}
 </div>
+
+<script>
+async function savePostedDate(draftId) {
+    const input = document.getElementById('posted_at_' + draftId);
+    const postedAt = input.value;
+
+    const resp = await fetch('/api/drafts/' + draftId + '/posted-date', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({posted_at: postedAt || null})
+    });
+
+    if (resp.ok) {
+        input.style.borderColor = '#28a745';
+        setTimeout(() => { input.style.borderColor = '#ccc'; }, 1500);
+    } else {
+        alert('Failed to save date');
+    }
+}
+</script>
 {% endblock %}'''
 
 HOOKS_BANK_CONTENT = '''{% extends "base.html" %}
@@ -637,25 +679,155 @@ HOOKS_BANK_CONTENT = '''{% extends "base.html" %}
 
 EDIT_CONTENT = '''{% extends "base.html" %}
 {% block content %}
-<div class="card">
-    <h2>Edit Draft</h2>
-    <form action="/update/{{ draft.id }}" method="POST">
-        <label>Hook</label>
-        {% if draft.hooks and draft.selected_hook is not none %}
-        <input type="text" name="hook" value="{{ draft.hooks[draft.selected_hook] }}">
-        {% else %}
-        <input type="text" name="hook" placeholder="No hook selected">
-        {% endif %}
+<style>
+    .library-thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s; }
+    .library-thumb.attached { border-color: #0077b5; box-shadow: 0 0 0 2px #0077b5; }
+    .library-thumb:hover { opacity: 0.85; }
+</style>
+<div class="grid-2">
+    <div>
+        <div class="card">
+            <h2>Edit Draft</h2>
+            <form action="/update/{{ draft.id }}" method="POST">
+                <label>Hook</label>
+                {% if draft.hooks and draft.selected_hook is not none %}
+                <input type="text" name="hook" value="{{ draft.hooks[draft.selected_hook] }}">
+                {% else %}
+                <input type="text" name="hook" placeholder="No hook selected">
+                {% endif %}
 
-        <label>Post Body</label>
-        <textarea name="content" rows="15">{{ draft.content }}</textarea>
+                <label>Post Body</label>
+                <textarea name="content" rows="15">{{ draft.content }}</textarea>
 
-        <div style="display: flex; gap: 10px;">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="/drafts" class="btn btn-secondary">Cancel</a>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="/drafts" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+
+        <div class="card">
+            <h2>Schedule</h2>
+            <label>Scheduled Date & Time</label>
+            <input type="datetime-local" id="scheduled_time" value="{{ draft.scheduled_time[:16] if draft.scheduled_time else '' }}">
+            <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+            {% if draft.scheduled_time %}
+            <button type="button" class="btn btn-secondary" onclick="clearSchedule()">Clear</button>
+            {% endif %}
+            <p style="margin-top: 10px; color: #666; font-size: 12px;">
+                Status: <span class="status-{{ draft.status }}">{{ draft.status.upper() }}</span>
+                {% if draft.posted_at %}<br>Posted: {{ draft.posted_at[:16] }}{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h2>Attached Images</h2>
+            <div id="attached-images" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                {% for img in attached_images %}
+                <div class="image-item" data-id="{{ img.id }}" style="position: relative;">
+                    <img src="/api/images/{{ img.id }}/file" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
+                    <button type="button" onclick="detachImage('{{ img.id }}')" style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px;" title="Detach">x</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% if not attached_images %}<p style="color: #999; font-size: 13px;">No images attached. Click images below to attach.</p>{% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Image Library <a href="/images" class="btn btn-secondary btn-sm" style="float:right;">Manage</a></h2>
+            <p style="color: #666; font-size: 12px; margin-bottom: 10px;">Click to attach/detach from this draft.</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                {% for img in library_images %}
+                <img src="/api/images/{{ img.id }}/file"
+                     class="library-thumb {{ 'attached' if img.id in attached_ids else '' }}"
+                     data-id="{{ img.id }}"
+                     onclick="toggleAttach('{{ img.id }}')"
+                     title="{{ img.original_name }}"
+                     loading="lazy">
+                {% endfor %}
+            </div>
+            {% if not library_images %}<p style="color: #999; font-size: 13px;"><a href="/images">Upload images</a> to the library first.</p>{% endif %}
+
+            <div style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 5px;">
+                <label>Quick Upload to Library</label>
+                <input type="file" id="quick-upload" accept="image/*">
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickUpload()" style="margin-top: 5px;">Upload & Attach</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Preview</h2>
+            <div class="preview-box" style="max-height: 300px; overflow-y: auto;">
+                {% if draft.hooks and draft.selected_hook is not none %}{{ draft.hooks[draft.selected_hook] }}
+
+{% endif %}{{ draft.content }}</div>
+            <p style="margin-top: 10px; color: #888; font-size: 12px;">Character count: {{ (draft.content|length) + (draft.hooks[draft.selected_hook]|length + 2 if draft.hooks and draft.selected_hook is not none else 0) }}</p>
+        </div>
+    </div>
 </div>
+
+<script>
+const draftId = '{{ draft.id }}';
+const attachedIds = new Set({{ attached_ids | tojson }});
+
+async function saveSchedule() {
+    const time = document.getElementById('scheduled_time').value;
+    const resp = await fetch('/api/drafts/' + draftId + '/schedule', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scheduled_time: time || null})
+    });
+    if (resp.ok) window.location.reload();
+    else alert('Failed to save schedule');
+}
+
+async function clearSchedule() {
+    const resp = await fetch('/api/drafts/' + draftId + '/schedule', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scheduled_time: null})
+    });
+    if (resp.ok) window.location.reload();
+}
+
+async function toggleAttach(imageId) {
+    if (attachedIds.has(imageId)) {
+        const resp = await fetch('/api/drafts/' + draftId + '/attach-image/' + imageId, { method: 'DELETE' });
+        if (resp.ok) window.location.reload();
+    } else {
+        const resp = await fetch('/api/drafts/' + draftId + '/attach-image/' + imageId, { method: 'POST' });
+        if (resp.ok) window.location.reload();
+    }
+}
+
+async function detachImage(imageId) {
+    const resp = await fetch('/api/drafts/' + draftId + '/attach-image/' + imageId, { method: 'DELETE' });
+    if (resp.ok) window.location.reload();
+}
+
+async function quickUpload() {
+    const input = document.getElementById('quick-upload');
+    if (!input.files.length) return;
+
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+
+    // Upload to library
+    const resp = await fetch('/api/images', { method: 'POST', body: formData });
+    if (!resp.ok) {
+        const data = await resp.json();
+        alert('Upload failed: ' + (data.detail || 'Unknown error'));
+        return;
+    }
+    const result = await resp.json();
+
+    // Attach to this draft
+    await fetch('/api/drafts/' + draftId + '/attach-image/' + result.image.id, { method: 'POST' });
+    window.location.reload();
+}
+</script>
 {% endblock %}'''
 
 PREVIEW_CONTENT = '''{% extends "base.html" %}
@@ -663,10 +835,22 @@ PREVIEW_CONTENT = '''{% extends "base.html" %}
 <div class="card">
     <h2>Post Preview</h2>
     <div class="preview-box">{{ final_content }}</div>
+
+    {% if attached_images %}
+    <div style="margin-top: 15px;">
+        <strong>Attached Images:</strong>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+            {% for img in attached_images %}
+            <img src="/api/images/{{ img.id }}/file" style="width: 150px; height: 150px; object-fit: cover; border-radius: 4px;">
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div style="margin-top: 20px; display: flex; gap: 10px;">
         <a href="/edit/{{ draft.id }}" class="btn btn-primary">Edit</a>
         <form action="/post/{{ draft.id }}" method="POST" style="display:inline;">
-            <button type="submit" class="btn btn-success" onclick="return confirm('Post to LinkedIn?')">Post to LinkedIn</button>
+            <button type="submit" class="btn btn-success" onclick="return confirm('Post to LinkedIn?{% if attached_images %} (includes {{ attached_images|length }} image(s)){% endif %}')">Post to LinkedIn</button>
         </form>
         <a href="/drafts" class="btn btn-secondary">Back</a>
     </div>
@@ -700,6 +884,66 @@ IDEAS_BANK_CONTENT = '''{% extends "base.html" %}
 </div>
 {% endblock %}'''
 
+IMAGES_LIBRARY_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Image Library</h2>
+    <p style="color: #666; margin-bottom: 15px;">Upload images here and attach them to any draft.</p>
+
+    <div style="margin-bottom: 20px;">
+        <label>Upload Image</label>
+        <input type="file" id="library-upload" accept="image/*" multiple>
+        <button type="button" class="btn btn-primary" onclick="uploadToLibrary()" style="margin-top: 10px;">Upload</button>
+        <p style="color: #666; font-size: 12px; margin-top: 5px;">Max 10MB per image. JPG, PNG, GIF, WebP supported.</p>
+    </div>
+
+    <div id="library-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
+        {% for img in images %}
+        <div class="library-image-card" data-id="{{ img.id }}" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+            <img src="/api/images/{{ img.id }}/file" style="width: 100%; height: 150px; object-fit: cover;" loading="lazy">
+            <div style="padding: 8px;">
+                <div style="font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ img.original_name }}">{{ img.original_name }}</div>
+                <div style="font-size: 11px; color: #999;">{{ img.uploaded_at[:10] }}</div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteFromLibrary('{{ img.id }}')" style="margin-top: 5px;">Delete</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not images %}
+    <p style="color: #999; text-align: center; padding: 40px;">No images uploaded yet.</p>
+    {% endif %}
+</div>
+
+<script>
+async function uploadToLibrary() {
+    const input = document.getElementById('library-upload');
+    if (!input.files.length) return;
+
+    for (const file of input.files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const resp = await fetch('/api/images', { method: 'POST', body: formData });
+        if (!resp.ok) {
+            const data = await resp.json();
+            alert('Upload failed: ' + (data.detail || 'Unknown error'));
+        }
+    }
+    window.location.reload();
+}
+
+async function deleteFromLibrary(imageId) {
+    if (!confirm('Delete this image from the library?')) return;
+    const resp = await fetch('/api/images/' + imageId, { method: 'DELETE' });
+    if (resp.ok) {
+        document.querySelector('.library-image-card[data-id="' + imageId + '"]').remove();
+    } else {
+        alert('Failed to delete');
+    }
+}
+</script>
+{% endblock %}'''
+
 SETTINGS_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
@@ -721,6 +965,96 @@ SETTINGS_CONTENT = '''{% extends "base.html" %}
 </div>
 {% endblock %}'''
 
+CALENDAR_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<style>
+    .calendar-nav { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+    .calendar-nav h2 { margin: 0; min-width: 200px; text-align: center; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #e0e0e0; border-radius: 8px; overflow: hidden; }
+    .calendar-header { background: #0077b5; color: white; padding: 10px; text-align: center; font-weight: 500; }
+    .calendar-day { background: white; min-height: 100px; padding: 8px; cursor: pointer; transition: background 0.2s; }
+    .calendar-day:hover { background: #f0f7ff; }
+    .calendar-day.other-month { background: #f5f5f5; color: #999; }
+    .calendar-day.today { background: #e8f4f8; }
+    .calendar-day.selected { background: #cce5ff; }
+    .day-number { font-weight: 500; margin-bottom: 5px; }
+    .day-posts { font-size: 11px; }
+    .day-post { background: #0077b5; color: white; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-decoration: none; }
+    .day-post.status-scheduled { background: #ffc107; color: #333; }
+    .day-post.status-posted { background: #28a745; }
+    .day-post.status-draft { background: #6c757d; }
+    .selected-date-posts { margin-top: 20px; }
+</style>
+
+<div class="card">
+    <div class="calendar-nav">
+        <a href="/calendar?month={{ prev_month }}" class="btn btn-secondary">&larr; Prev</a>
+        <h2>{{ month_name }} {{ year }}</h2>
+        <a href="/calendar?month={{ next_month }}" class="btn btn-secondary">Next &rarr;</a>
+        <a href="/calendar" class="btn btn-primary" style="margin-left: auto;">Today</a>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="calendar-header">Sun</div>
+        <div class="calendar-header">Mon</div>
+        <div class="calendar-header">Tue</div>
+        <div class="calendar-header">Wed</div>
+        <div class="calendar-header">Thu</div>
+        <div class="calendar-header">Fri</div>
+        <div class="calendar-header">Sat</div>
+
+        {% for day in calendar_days %}
+        <div class="calendar-day {{ 'other-month' if not day.current_month else '' }} {{ 'today' if day.is_today else '' }} {{ 'selected' if day.date == selected_date else '' }}"
+             onclick="selectDate('{{ day.date }}')">
+            <div class="day-number">{{ day.day }}</div>
+            <div class="day-posts">
+                {% for post in day.posts[:3] %}
+                <a href="/edit/{{ post.id }}" class="day-post status-{{ post.status }}" title="{{ post.topic or 'Untitled' }}">
+                    {{ (post.topic or 'Untitled')[:15] }}
+                </a>
+                {% endfor %}
+                {% if day.posts|length > 3 %}
+                <span style="color: #666;">+{{ day.posts|length - 3 }} more</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if selected_date %}
+<div class="card selected-date-posts">
+    <h2>Posts for {{ selected_date }}</h2>
+    {% if selected_posts %}
+        {% for draft in selected_posts %}
+        <div class="draft-item">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="font-family: monospace; color: #666;">ID: {{ draft.id }}</span>
+                <span class="status-{{ draft.status }}">{{ draft.status.upper() }}</span>
+            </div>
+            {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br>{% endif %}
+            {% if draft.scheduled_time %}<strong>Scheduled:</strong> {{ draft.scheduled_time[:16] }}<br>{% endif %}
+            {% if draft.posted_at %}<strong>Posted:</strong> {{ draft.posted_at[:16] }}<br>{% endif %}
+            <div class="draft-preview" style="margin-top: 10px;">{{ draft.content[:200] }}{% if draft.content|length > 200 %}...{% endif %}</div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <a href="/edit/{{ draft.id }}" class="btn btn-primary btn-sm">Edit</a>
+                <a href="/preview/{{ draft.id }}" class="btn btn-secondary btn-sm">Preview</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #666;">No posts scheduled or posted for this date.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+function selectDate(date) {
+    window.location.href = '/calendar?month={{ year }}-{{ "%02d"|format(month) }}&date=' + date;
+}
+</script>
+{% endblock %}'''
+
 # Write templates
 def setup_templates():
     (TEMPLATES_DIR / "base.html").write_text(BASE_TEMPLATE, encoding="utf-8")
@@ -733,6 +1067,8 @@ def setup_templates():
     (TEMPLATES_DIR / "edit.html").write_text(EDIT_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "preview.html").write_text(PREVIEW_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "settings.html").write_text(SETTINGS_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "calendar.html").write_text(CALENDAR_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "images_library.html").write_text(IMAGES_LIBRARY_CONTENT, encoding="utf-8")
 
 setup_templates()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -982,7 +1318,12 @@ async def mark_status_route(draft_id: str, status: str):
     if not draft:
         return RedirectResponse(url="/drafts?message=Draft+not+found&type=error", status_code=303)
 
-    update_draft(draft_id, status=status)
+    updates = {"status": status}
+    # Set posted_at when marking as posted
+    if status == "posted":
+        updates["posted_at"] = dt.now().isoformat()
+
+    update_draft(draft_id, **updates)
 
     # Redirect to the appropriate page based on the new status
     redirect_map = {
@@ -1065,10 +1406,26 @@ async def edit_page(request: Request, draft_id: str, message: str = None, type: 
     if not draft:
         return RedirectResponse(url="/drafts?message=Draft+not+found&type=error", status_code=303)
 
+    # Get attached image IDs from draft
+    attached_ids = [img_ref.get("id") or img_ref for img_ref in draft.get("images", [])]
+
+    # Resolve attached images from library
+    attached_images = []
+    for aid in attached_ids:
+        img = get_image(aid) if isinstance(aid, str) else None
+        if img:
+            attached_images.append(img)
+
+    # All library images
+    library_images = list_images()
+
     return templates.TemplateResponse("edit.html", {
         "request": request,
         "page": "edit",
         "draft": draft,
+        "attached_images": attached_images,
+        "attached_ids": attached_ids,
+        "library_images": library_images,
         "message": message,
         "message_type": type
     })
@@ -1096,11 +1453,21 @@ async def preview_page(request: Request, draft_id: str):
         return RedirectResponse(url="/drafts?message=Draft+not+found&type=error", status_code=303)
 
     final_content = get_final_post(draft_id)
+
+    # Resolve attached images
+    attached_images = []
+    for img_ref in draft.get("images", []):
+        aid = img_ref.get("id") if isinstance(img_ref, dict) else img_ref
+        img = get_image(aid)
+        if img:
+            attached_images.append(img)
+
     return templates.TemplateResponse("preview.html", {
         "request": request,
         "page": "preview",
         "draft": draft,
-        "final_content": final_content
+        "final_content": final_content,
+        "attached_images": attached_images,
     })
 
 
@@ -1112,10 +1479,18 @@ async def post_to_linkedin_route(draft_id: str):
 
     final_content = get_final_post(draft_id)
 
+    # Get image URLs from library
+    image_urls = []
+    for img_ref in draft.get("images", []):
+        aid = img_ref.get("id") if isinstance(img_ref, dict) else img_ref
+        url = get_image_url(aid)
+        if url:
+            image_urls.append(url)
+
     try:
-        result = post_to_linkedin(final_content)
+        result = post_to_linkedin(final_content, image_urls if image_urls else None)
         if result["success"]:
-            update_draft(draft_id, status="posted")
+            update_draft(draft_id, status="posted", posted_at=dt.now().isoformat())
             return RedirectResponse(url="/drafts?message=Posted+successfully!&type=success", status_code=303)
         else:
             return RedirectResponse(
@@ -1146,6 +1521,243 @@ async def settings_page(request: Request):
         "linkedin_client": bool(os.getenv("LINKEDIN_CLIENT_ID")),
         "linkedin_secret": bool(os.getenv("LINKEDIN_CLIENT_SECRET")),
     })
+
+
+# =============================================================================
+# CALENDAR ROUTES
+# =============================================================================
+
+@app.get("/calendar", response_class=HTMLResponse)
+async def calendar_page(request: Request, month: str = None, date: str = None):
+    """
+    Calendar view showing posts by date.
+
+    Args:
+        month: Optional month in YYYY-MM format
+        date: Optional selected date in YYYY-MM-DD format
+    """
+    from datetime import date as date_type
+
+    # Parse month or use current
+    today = date_type.today()
+    if month:
+        try:
+            parts = month.split("-")
+            year = int(parts[0])
+            month_num = int(parts[1])
+        except (ValueError, IndexError):
+            year = today.year
+            month_num = today.month
+    else:
+        year = today.year
+        month_num = today.month
+
+    # Get drafts for this month
+    month_drafts = list_drafts_by_date(year, month_num)
+
+    # Build calendar grid
+    cal_obj = cal.Calendar(firstweekday=6)  # Sunday first
+    calendar_days = []
+
+    for week in cal_obj.monthdatescalendar(year, month_num):
+        for day_date in week:
+            day_str = day_date.strftime("%Y-%m-%d")
+            # Get posts for this day
+            day_posts = []
+            for draft in month_drafts:
+                scheduled = draft.get("scheduled_time", "")
+                posted = draft.get("posted_at", "")
+                if scheduled and scheduled[:10] == day_str:
+                    day_posts.append(draft)
+                elif posted and posted[:10] == day_str:
+                    day_posts.append(draft)
+
+            calendar_days.append({
+                "day": day_date.day,
+                "date": day_str,
+                "current_month": day_date.month == month_num,
+                "is_today": day_date == today,
+                "posts": day_posts
+            })
+
+    # Get posts for selected date
+    selected_posts = []
+    if date:
+        selected_posts = get_drafts_for_date(date)
+
+    # Calculate prev/next months
+    if month_num == 1:
+        prev_month = f"{year-1}-12"
+    else:
+        prev_month = f"{year}-{month_num-1:02d}"
+
+    if month_num == 12:
+        next_month = f"{year+1}-01"
+    else:
+        next_month = f"{year}-{month_num+1:02d}"
+
+    month_name = cal.month_name[month_num]
+
+    return templates.TemplateResponse("calendar.html", {
+        "request": request,
+        "page": "calendar",
+        "year": year,
+        "month": month_num,
+        "month_name": month_name,
+        "calendar_days": calendar_days,
+        "prev_month": prev_month,
+        "next_month": next_month,
+        "selected_date": date,
+        "selected_posts": selected_posts
+    })
+
+
+# =============================================================================
+# IMAGE LIBRARY ROUTES
+# =============================================================================
+
+@app.get("/images", response_class=HTMLResponse)
+async def images_library_page(request: Request, message: str = None, type: str = None):
+    """Image library page."""
+    images = list_images()
+    return templates.TemplateResponse("images_library.html", {
+        "request": request,
+        "page": "images",
+        "images": images,
+        "message": message,
+        "message_type": type,
+    })
+
+
+@app.post("/api/images")
+async def api_upload_image(file: UploadFile = File(...)):
+    """Upload an image to the library."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+
+    try:
+        image_meta = save_image(content, file.filename or "image.jpg")
+        return JSONResponse({"success": True, "image": image_meta})
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/images")
+async def api_list_images():
+    """List all library images."""
+    return JSONResponse({"images": list_images()})
+
+
+@app.get("/api/images/{image_id}/file")
+async def api_serve_image(image_id: str):
+    """Proxy an image from S3 to the browser."""
+    from s3_storage import download_bytes
+    img = get_image(image_id)
+    if not img:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    ext = img.get("s3_key", "").rsplit(".", 1)[-1].lower()
+    content_types = {
+        "jpg": "image/jpeg", "jpeg": "image/jpeg",
+        "png": "image/png", "gif": "image/gif", "webp": "image/webp",
+    }
+    content_type = content_types.get(ext, "image/jpeg")
+
+    try:
+        data = download_bytes(img["s3_key"])
+    except Exception:
+        raise HTTPException(status_code=502, detail="Failed to fetch image from storage")
+
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.delete("/api/images/{image_id}")
+async def api_delete_image(image_id: str):
+    """Delete an image from the library."""
+    deleted = delete_image(image_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return JSONResponse({"success": True})
+
+
+@app.post("/api/drafts/{draft_id}/attach-image/{image_id}")
+async def attach_image_to_draft(draft_id: str, image_id: str):
+    """Attach a library image to a draft."""
+    draft = get_draft(draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    img = get_image(image_id)
+    if not img:
+        raise HTTPException(status_code=404, detail="Image not found in library")
+
+    images = draft.get("images", [])
+    # Don't double-attach
+    existing_ids = {
+        (ref.get("id") if isinstance(ref, dict) else ref) for ref in images
+    }
+    if image_id not in existing_ids:
+        images.append({"id": image_id})
+        update_draft(draft_id, images=images)
+
+    return JSONResponse({"success": True})
+
+
+@app.delete("/api/drafts/{draft_id}/attach-image/{image_id}")
+async def detach_image_from_draft(draft_id: str, image_id: str):
+    """Detach a library image from a draft."""
+    draft = get_draft(draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    images = draft.get("images", [])
+    images = [
+        ref for ref in images
+        if (ref.get("id") if isinstance(ref, dict) else ref) != image_id
+    ]
+    update_draft(draft_id, images=images)
+
+    return JSONResponse({"success": True})
+
+
+@app.post("/api/drafts/{draft_id}/schedule")
+async def schedule_draft(request: Request, draft_id: str):
+    """Set or update the scheduled time for a draft."""
+    draft = get_draft(draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    data = await request.json()
+    scheduled_time = data.get("scheduled_time")
+
+    updates = {"scheduled_time": scheduled_time}
+    if scheduled_time:
+        updates["status"] = "scheduled"
+
+    update_draft(draft_id, **updates)
+    return JSONResponse({"success": True})
+
+
+@app.post("/api/drafts/{draft_id}/posted-date")
+async def set_posted_date(request: Request, draft_id: str):
+    """Set or update the posted_at date for a draft."""
+    draft = get_draft(draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    data = await request.json()
+    posted_at = data.get("posted_at")
+
+    update_draft(draft_id, posted_at=posted_at)
+    return JSONResponse({"success": True})
 
 
 def main():

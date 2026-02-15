@@ -17,7 +17,15 @@
       "Bash(cmd.exe /c \"railway variables\")",
       "Bash(pip install:*)",
       "Bash(ls:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(railway variables:*)",
+      "Bash(where:*)",
+      "Bash(railway version:*)",
+      "Bash(railway service:*)",
+      "Bash(railway status:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)"
     ]
   }
 }
