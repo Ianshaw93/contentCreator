@@ -8,6 +8,7 @@ env/
 .drafts.json
 .hooks_bank.json
 .ideas_bank.json
+.insights_bank.json
 .image_library.json
 .linkedin_tokens.json
 execution/templates/

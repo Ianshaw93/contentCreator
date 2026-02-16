@@ -28,7 +28,11 @@ from draft_storage import (
     list_drafts, get_draft, create_draft, update_draft,
     delete_draft, get_final_post, save_hook_to_bank, get_hooks_bank,
     delete_hook_from_bank, save_idea_to_bank, get_ideas_bank, delete_idea_from_bank,
-    list_drafts_by_date, get_drafts_for_date
+    list_drafts_by_date, get_drafts_for_date,
+    save_insight_to_bank, get_insights_bank, get_insight, update_insight,
+    delete_insight_from_bank, seed_insights_if_empty,
+    save_social_proof, get_social_proof_bank, get_social_proof, update_social_proof,
+    delete_social_proof, seed_social_proof_if_empty
 )
 from image_storage import save_image, delete_image, list_images, get_image, get_image_url
 from generate_post import generate_post_body, load_knowledge_base
@@ -208,6 +212,8 @@ BASE_TEMPLATE = '''<!DOCTYPE html>
                 <a href="/posted" class="{{ 'active' if page == 'posted' else '' }}">Posted</a>
                 <a href="/ideas-bank" class="{{ 'active' if page == 'ideas-bank' else '' }}">Ideas</a>
                 <a href="/hooks-bank" class="{{ 'active' if page == 'hooks-bank' else '' }}">Hooks</a>
+                <a href="/insights" class="{{ 'active' if page == 'insights' else '' }}">Insights</a>
+                <a href="/results" class="{{ 'active' if page == 'results' else '' }}">Results</a>
                 <a href="/images" class="{{ 'active' if page == 'images' else '' }}">Images</a>
                 <a href="/settings" class="{{ 'active' if page == 'settings' else '' }}">Settings</a>
             </nav>
@@ -568,6 +574,13 @@ SCHEDULED_CONTENT = '''{% extends "base.html" %}
             <strong>Hook:</strong> {{ draft.hooks[draft.selected_hook][:100] }}...<br>
             {% endif %}
             {% if draft.images %}<strong>Images:</strong> {{ draft.images|length }} attached<br>{% endif %}
+            {% if draft.metrics and (draft.metrics.impressions is not none or draft.metrics.likes is not none or draft.metrics.comments is not none) %}
+            <div style="background: #e8f4fd; padding: 6px 10px; border-radius: 4px; margin-top: 8px; display: flex; gap: 15px; font-size: 13px;">
+                {% if draft.metrics.impressions is not none %}<span>👁 <strong>{{ draft.metrics.impressions }}</strong></span>{% endif %}
+                {% if draft.metrics.likes is not none %}<span>👍 <strong>{{ draft.metrics.likes }}</strong></span>{% endif %}
+                {% if draft.metrics.comments is not none %}<span>💬 <strong>{{ draft.metrics.comments }}</strong></span>{% endif %}
+            </div>
+            {% endif %}
             <div class="draft-preview" style="margin-top: 10px;">{{ draft.content[:300] }}{% if draft.content|length > 300 %}...{% endif %}</div>
             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="/edit/{{ draft.id }}" class="btn btn-primary btn-sm">Edit</a>
@@ -609,6 +622,27 @@ POSTED_CONTENT = '''{% extends "base.html" %}
                        style="padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
                 <button type="button" class="btn btn-sm btn-primary" onclick="savePostedDate('{{ draft.id }}')">Save Date</button>
             </div>
+            <div style="background: #e8f4fd; padding: 8px; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <strong>Impressions:</strong>
+                    <input type="number" id="impressions_{{ draft.id }}" min="0"
+                           value="{{ draft.metrics.impressions if draft.metrics and draft.metrics.impressions is not none else '' }}"
+                           style="width: 80px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <strong>Likes:</strong>
+                    <input type="number" id="likes_{{ draft.id }}" min="0"
+                           value="{{ draft.metrics.likes if draft.metrics and draft.metrics.likes is not none else '' }}"
+                           style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <strong>Comments:</strong>
+                    <input type="number" id="comments_{{ draft.id }}" min="0"
+                           value="{{ draft.metrics.comments if draft.metrics and draft.metrics.comments is not none else '' }}"
+                           style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" onclick="saveMetrics('{{ draft.id }}')">Save Metrics</button>
+            </div>
             {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br>{% endif %}
             {% if draft.selected_hook is not none and draft.hooks %}
             <strong>Hook:</strong> {{ draft.hooks[draft.selected_hook][:100] }}...<br>
@@ -647,6 +681,32 @@ async function savePostedDate(draftId) {
         setTimeout(() => { input.style.borderColor = '#ccc'; }, 1500);
     } else {
         alert('Failed to save date');
+    }
+}
+
+async function saveMetrics(draftId) {
+    const impressions = document.getElementById('impressions_' + draftId).value;
+    const likes = document.getElementById('likes_' + draftId).value;
+    const comments = document.getElementById('comments_' + draftId).value;
+
+    const resp = await fetch('/api/drafts/' + draftId + '/metrics', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            impressions: impressions ? parseInt(impressions) : null,
+            likes: likes ? parseInt(likes) : null,
+            comments: comments ? parseInt(comments) : null
+        })
+    });
+
+    if (resp.ok) {
+        ['impressions_', 'likes_', 'comments_'].forEach(prefix => {
+            const el = document.getElementById(prefix + draftId);
+            el.style.borderColor = '#28a745';
+            setTimeout(() => { el.style.borderColor = '#ccc'; }, 1500);
+        });
+    } else {
+        alert('Failed to save metrics');
     }
 }
 </script>
@@ -884,6 +944,213 @@ IDEAS_BANK_CONTENT = '''{% extends "base.html" %}
 </div>
 {% endblock %}'''
 
+INSIGHTS_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>10x Value Insights</h2>
+    <p style="color: #666; margin-bottom: 15px;">Unique, high-value statements from posted content — things only we can say, backed by real experience.</p>
+
+    <div style="margin-bottom: 20px;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('add-form').style.display = document.getElementById('add-form').style.display === 'none' ? 'block' : 'none'">+ Add New Insight</button>
+
+        {% if categories %}
+        <span style="margin-left: 15px;">Filter:
+            <a href="/insights" class="btn btn-sm {{ 'btn-primary' if not current_category else 'btn-secondary' }}">All</a>
+            {% for cat in categories %}
+            <a href="/insights?category={{ cat }}" class="btn btn-sm {{ 'btn-primary' if current_category == cat else 'btn-secondary' }}">{{ cat }}</a>
+            {% endfor %}
+        </span>
+        {% endif %}
+    </div>
+
+    <div id="add-form" style="display: none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+        <h3 style="margin-bottom: 10px; color: #0077b5;">New Insight</h3>
+        <form action="/insights/add" method="POST">
+            <label>Title</label>
+            <input type="text" name="title" placeholder="e.g., Outreach Philosophy" required>
+            <label>Category</label>
+            <input type="text" name="category" placeholder="e.g., Outreach, Content, Founder" list="category-list">
+            <datalist id="category-list">
+                {% for cat in categories %}
+                <option value="{{ cat }}">
+                {% endfor %}
+            </datalist>
+            <label>Content</label>
+            <textarea name="content" rows="10" placeholder="The valuable insight text..." required></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">Save Insight</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-form').style.display='none'">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    {% if insights %}
+        {% for insight in insights %}
+        <div class="draft-item" id="insight-{{ insight.id }}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <strong style="font-size: 16px;">{{ insight.title }}</strong>
+                    {% if insight.category %}<span style="background: #e8f4f8; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">{{ insight.category }}</span>{% endif %}
+                </div>
+                <small style="color: #888;">{{ insight.created_at[:10] }}</small>
+            </div>
+
+            <div class="insight-view-{{ insight.id }}">
+                <div class="preview-box" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">{{ insight.content }}</div>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="toggleEdit('{{ insight.id }}')">Edit</button>
+                    <form action="/insights/delete/{{ insight.id }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this insight?')">Delete</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="insight-edit-{{ insight.id }}" style="display: none;">
+                <form action="/insights/update/{{ insight.id }}" method="POST">
+                    <label>Title</label>
+                    <input type="text" name="title" value="{{ insight.title }}" required>
+                    <label>Category</label>
+                    <input type="text" name="category" value="{{ insight.category or '' }}" list="category-list">
+                    <label>Content</label>
+                    <textarea name="content" rows="10" required>{{ insight.content }}</textarea>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('{{ insight.id }}')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #666;">No insights yet. Add your first one above.</p>
+    {% endif %}
+</div>
+
+<script>
+function toggleEdit(id) {
+    const view = document.querySelector('.insight-view-' + id);
+    const edit = document.querySelector('.insight-edit-' + id);
+    if (edit.style.display === 'none') {
+        view.style.display = 'none';
+        edit.style.display = 'block';
+    } else {
+        view.style.display = 'block';
+        edit.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}'''
+
+RESULTS_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Results & Social Proof</h2>
+    <p style="color: #666; margin-bottom: 15px;">Concrete results, metrics, and proof points to weave into content. Use these in posts to build credibility.</p>
+
+    <div style="margin-bottom: 20px;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('add-result-form').style.display = document.getElementById('add-result-form').style.display === 'none' ? 'block' : 'none'">+ Add Result</button>
+
+        {% if categories %}
+        <span style="margin-left: 15px;">Filter:
+            <a href="/results" class="btn btn-sm {{ 'btn-primary' if not current_category else 'btn-secondary' }}">All</a>
+            {% for cat in categories %}
+            <a href="/results?category={{ cat }}" class="btn btn-sm {{ 'btn-primary' if current_category == cat else 'btn-secondary' }}">{{ cat }}</a>
+            {% endfor %}
+        </span>
+        {% endif %}
+    </div>
+
+    <div id="add-result-form" style="display: none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+        <h3 style="margin-bottom: 10px; color: #0077b5;">New Result</h3>
+        <form action="/results/add" method="POST">
+            <label>Metric (what was measured)</label>
+            <input type="text" name="metric" placeholder="e.g., Client Revenue, Calls Booked, Time Saved" required>
+            <label>Value (the number/result)</label>
+            <input type="text" name="value" placeholder="e.g., $35k/month, 4 calls/week, 2nd Place" required>
+            <label>Category</label>
+            <input type="text" name="category" placeholder="e.g., Revenue, Outreach, Efficiency, Credibility" list="result-category-list">
+            <datalist id="result-category-list">
+                {% for cat in categories %}
+                <option value="{{ cat }}">
+                {% endfor %}
+            </datalist>
+            <label>Source / Client</label>
+            <input type="text" name="source" placeholder="e.g., Client 1, Personal, Industry Data">
+            <label>Context (the story behind the number)</label>
+            <textarea name="context" rows="4" placeholder="What happened, how it was achieved, any relevant details..."></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">Save Result</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-result-form').style.display='none'">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    {% if results %}
+        {% for result in results %}
+        <div class="draft-item" id="result-{{ result.id }}" style="border-left: 4px solid {% if result.category == 'Revenue' %}#28a745{% elif result.category == 'Outreach' %}#0077b5{% elif result.category == 'Efficiency' %}#ffc107{% elif result.category == 'Credibility' %}#6f42c1{% else %}#6c757d{% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #0077b5;">{{ result.value }}</div>
+                    <div style="font-size: 16px; font-weight: 500; color: #333;">{{ result.metric }}</div>
+                </div>
+                <div style="text-align: right;">
+                    {% if result.category %}<span style="background: #e8f4f8; padding: 2px 8px; border-radius: 4px; font-size: 12px;">{{ result.category }}</span>{% endif %}
+                    {% if result.source %}<div style="color: #888; font-size: 12px; margin-top: 4px;">{{ result.source }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="result-view-{{ result.id }}">
+                {% if result.context %}
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 14px; color: #555; white-space: pre-wrap;">{{ result.context }}</div>
+                {% endif %}
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="toggleResultEdit('{{ result.id }}')">Edit</button>
+                    <form action="/results/delete/{{ result.id }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this result?')">Delete</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="result-edit-{{ result.id }}" style="display: none;">
+                <form action="/results/update/{{ result.id }}" method="POST">
+                    <label>Metric</label>
+                    <input type="text" name="metric" value="{{ result.metric }}" required>
+                    <label>Value</label>
+                    <input type="text" name="value" value="{{ result.value }}" required>
+                    <label>Category</label>
+                    <input type="text" name="category" value="{{ result.category or '' }}" list="result-category-list">
+                    <label>Source</label>
+                    <input type="text" name="source" value="{{ result.source or '' }}">
+                    <label>Context</label>
+                    <textarea name="context" rows="4">{{ result.context or '' }}</textarea>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleResultEdit('{{ result.id }}')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #666;">No results yet. Add your first one above.</p>
+    {% endif %}
+</div>
+
+<script>
+function toggleResultEdit(id) {
+    const view = document.querySelector('.result-view-' + id);
+    const edit = document.querySelector('.result-edit-' + id);
+    if (edit.style.display === 'none') {
+        view.style.display = 'none';
+        edit.style.display = 'block';
+    } else {
+        view.style.display = 'block';
+        edit.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}'''
+
 IMAGES_LIBRARY_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
@@ -972,14 +1239,14 @@ CALENDAR_CONTENT = '''{% extends "base.html" %}
     .calendar-nav h2 { margin: 0; min-width: 200px; text-align: center; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #e0e0e0; border-radius: 8px; overflow: hidden; }
     .calendar-header { background: #0077b5; color: white; padding: 10px; text-align: center; font-weight: 500; }
-    .calendar-day { background: white; min-height: 100px; padding: 8px; cursor: pointer; transition: background 0.2s; }
+    .calendar-day { background: white; min-height: 120px; padding: 8px; cursor: pointer; transition: background 0.2s; }
     .calendar-day:hover { background: #f0f7ff; }
     .calendar-day.other-month { background: #f5f5f5; color: #999; }
     .calendar-day.today { background: #e8f4f8; }
     .calendar-day.selected { background: #cce5ff; }
     .day-number { font-weight: 500; margin-bottom: 5px; }
     .day-posts { font-size: 11px; }
-    .day-post { background: #0077b5; color: white; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-decoration: none; }
+    .day-post { background: #0077b5; color: white; padding: 3px 5px; border-radius: 3px; margin-bottom: 3px; display: block; text-decoration: none; font-size: 10px; line-height: 1.3; }
     .day-post.status-scheduled { background: #ffc107; color: #333; }
     .day-post.status-posted { background: #28a745; }
     .day-post.status-draft { background: #6c757d; }
@@ -1009,8 +1276,9 @@ CALENDAR_CONTENT = '''{% extends "base.html" %}
             <div class="day-number">{{ day.day }}</div>
             <div class="day-posts">
                 {% for post in day.posts[:3] %}
-                <a href="/edit/{{ post.id }}" class="day-post status-{{ post.status }}" title="{{ post.topic or 'Untitled' }}">
-                    {{ (post.topic or 'Untitled')[:15] }}
+                <a href="/edit/{{ post.id }}" class="day-post status-{{ post.status }}" title="{{ post.content[:150] }}">
+                    <div style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{% if post.selected_hook is not none and post.hooks %}{{ post.hooks[post.selected_hook][:80] }}{% else %}{{ post.content.split('\n')[0][:80] }}{% endif %}</div>
+                    {% if post.metrics and post.metrics.impressions is not none %}<div style="opacity:0.85;font-size:9px;margin-top:2px;">👁{{ post.metrics.impressions }} 👍{{ post.metrics.likes }} 💬{{ post.metrics.comments }}</div>{% endif %}
                 </a>
                 {% endfor %}
                 {% if day.posts|length > 3 %}
@@ -1035,6 +1303,13 @@ CALENDAR_CONTENT = '''{% extends "base.html" %}
             {% if draft.topic %}<strong>Topic:</strong> {{ draft.topic }}<br>{% endif %}
             {% if draft.scheduled_time %}<strong>Scheduled:</strong> {{ draft.scheduled_time[:16] }}<br>{% endif %}
             {% if draft.posted_at %}<strong>Posted:</strong> {{ draft.posted_at[:16] }}<br>{% endif %}
+            {% if draft.metrics and (draft.metrics.impressions is not none or draft.metrics.likes is not none or draft.metrics.comments is not none) %}
+            <div style="background: #e8f4fd; padding: 6px 10px; border-radius: 4px; margin-top: 8px; display: flex; gap: 15px; font-size: 13px;">
+                {% if draft.metrics.impressions is not none %}<span>👁 <strong>{{ draft.metrics.impressions }}</strong></span>{% endif %}
+                {% if draft.metrics.likes is not none %}<span>👍 <strong>{{ draft.metrics.likes }}</strong></span>{% endif %}
+                {% if draft.metrics.comments is not none %}<span>💬 <strong>{{ draft.metrics.comments }}</strong></span>{% endif %}
+            </div>
+            {% endif %}
             <div class="draft-preview" style="margin-top: 10px;">{{ draft.content[:200] }}{% if draft.content|length > 200 %}...{% endif %}</div>
             <div style="margin-top: 15px; display: flex; gap: 10px;">
                 <a href="/edit/{{ draft.id }}" class="btn btn-primary btn-sm">Edit</a>
@@ -1069,6 +1344,15 @@ def setup_templates():
     (TEMPLATES_DIR / "settings.html").write_text(SETTINGS_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "calendar.html").write_text(CALENDAR_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "images_library.html").write_text(IMAGES_LIBRARY_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "insights.html").write_text(INSIGHTS_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "results.html").write_text(RESULTS_CONTENT, encoding="utf-8")
+
+# Initialize DB tables, migrate JSON data, seed insights
+from database import create_tables, migrate_json_to_db
+create_tables()
+migrate_json_to_db()
+seed_insights_if_empty()
+seed_social_proof_if_empty()
 
 setup_templates()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -1398,6 +1682,108 @@ async def delete_saved_idea_route(idea_id: str):
 async def delete_saved_hook_route(hook_id: str):
     delete_hook_from_bank(hook_id)
     return RedirectResponse(url="/hooks-bank?message=Hook+deleted&type=success", status_code=303)
+
+
+# =============================================================================
+# INSIGHTS ROUTES
+# =============================================================================
+
+@app.get("/insights", response_class=HTMLResponse)
+async def insights_page(request: Request, category: str = None, message: str = None, type: str = None):
+    insights = get_insights_bank(category=category)
+    all_insights = get_insights_bank()
+    categories = sorted(set(i.get("category") for i in all_insights if i.get("category")))
+    return templates.TemplateResponse("insights.html", {
+        "request": request,
+        "page": "insights",
+        "insights": insights,
+        "categories": categories,
+        "current_category": category,
+        "message": message,
+        "message_type": type
+    })
+
+
+@app.post("/insights/add")
+async def add_insight_route(title: str = Form(...), content: str = Form(...), category: str = Form("")):
+    save_insight_to_bank(title, content, category.strip() or None)
+    return RedirectResponse(url="/insights?message=Insight+added&type=success", status_code=303)
+
+
+@app.post("/insights/update/{insight_id}")
+async def update_insight_route(insight_id: str, title: str = Form(...), content: str = Form(...), category: str = Form("")):
+    update_insight(insight_id, title=title, content=content, category=category.strip() or None)
+    return RedirectResponse(url="/insights?message=Insight+updated&type=success", status_code=303)
+
+
+@app.post("/insights/delete/{insight_id}")
+async def delete_insight_route(insight_id: str):
+    delete_insight_from_bank(insight_id)
+    return RedirectResponse(url="/insights?message=Insight+deleted&type=success", status_code=303)
+
+
+# =============================================================================
+# RESULTS / SOCIAL PROOF ROUTES
+# =============================================================================
+
+@app.get("/results", response_class=HTMLResponse)
+async def results_page(request: Request, category: str = None, message: str = None, type: str = None):
+    results = get_social_proof_bank(category=category)
+    all_results = get_social_proof_bank()
+    categories = sorted(set(r.get("category") for r in all_results if r.get("category")))
+    return templates.TemplateResponse("results.html", {
+        "request": request,
+        "page": "results",
+        "results": results,
+        "categories": categories,
+        "current_category": category,
+        "message": message,
+        "message_type": type
+    })
+
+
+@app.post("/results/add")
+async def add_result_route(
+    metric: str = Form(...),
+    value: str = Form(...),
+    category: str = Form(""),
+    source: str = Form(""),
+    context: str = Form("")
+):
+    save_social_proof(
+        metric=metric,
+        value=value,
+        context=context.strip() or None,
+        source=source.strip() or None,
+        category=category.strip() or None,
+    )
+    return RedirectResponse(url="/results?message=Result+added&type=success", status_code=303)
+
+
+@app.post("/results/update/{proof_id}")
+async def update_result_route(
+    proof_id: str,
+    metric: str = Form(...),
+    value: str = Form(...),
+    category: str = Form(""),
+    source: str = Form(""),
+    context: str = Form("")
+):
+    update_social_proof(
+        proof_id,
+        metric=metric,
+        value=value,
+        context=context.strip() or None,
+        source=source.strip() or None,
+        category=category.strip() or None,
+    )
+    return RedirectResponse(url="/results?message=Result+updated&type=success", status_code=303)
+
+
+@app.post("/results/delete/{proof_id}")
+async def delete_result_route(proof_id: str):
+    delete_social_proof(proof_id)
+    return RedirectResponse(url="/results?message=Result+deleted&type=success", status_code=303)
 
 
 @app.get("/edit/{draft_id}", response_class=HTMLResponse)
@@ -1760,7 +2146,26 @@ async def set_posted_date(request: Request, draft_id: str):
     return JSONResponse({"success": True})
 
 
+@app.post("/api/drafts/{draft_id}/metrics")
+async def set_metrics(request: Request, draft_id: str):
+    """Set or update engagement metrics for a posted draft."""
+    draft = get_draft(draft_id)
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    data = await request.json()
+    metrics = {
+        "impressions": data.get("impressions"),
+        "likes": data.get("likes"),
+        "comments": data.get("comments"),
+    }
+
+    update_draft(draft_id, metrics=metrics)
+    return JSONResponse({"success": True})
+
+
 def main():
+    os.chdir(Path(__file__).parent)
     print("Starting LinkedIn Content Creator...")
     print("Open http://localhost:5000 in your browser")
     uvicorn.run("web_ui:app", host="0.0.0.0", port=5000, reload=True)
