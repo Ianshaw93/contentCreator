@@ -14,5 +14,7 @@ env/
 execution/templates/
 .claude/*
 !.claude/skills/
+!.claude/commands/
+!.claude/CROSS_REPO.md
 *.png
 uploads/

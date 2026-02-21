@@ -31,3 +31,25 @@ This is part of a 3-project prospecting/outreach system:
 2. Self-anneal: fix errors, update scripts, update directives
 3. Never modify `execution/prompts.py` without permission
 4. Be concise
+
+## Cross-Repo Knowledge Sharing
+
+This project is part of a 3-repo system. Read `.claude/CROSS_REPO.md` for shared context (endpoints, data flows, conventions).
+
+### Proactive Propagation
+
+**After completing work, assess whether sibling repos need to know about it.** Propagate when you've created or changed:
+- Content models or DB schema (shared database)
+- Draft generation pipelines that feed into outreach messaging
+- New skills that could benefit other repos
+- Content performance metrics or hooks data that informs prospecting
+- Conventions or patterns that apply across repos
+
+### How to Propagate
+
+1. Update `C:\Users\IanShaw\localProgramming\smiths\CROSS_REPO.md` (canonical source)
+2. Copy to all repos: `cp ../CROSS_REPO.md .claude/CROSS_REPO.md` (and siblings)
+3. If a sibling's CLAUDE.md needs project-specific updates, edit it directly
+4. Commit and push in each affected repo
+
+Or run `/sync-siblings` to follow the full workflow.
