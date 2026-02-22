@@ -31,6 +31,7 @@ This is part of a 3-project prospecting/outreach system:
 2. Self-anneal: fix errors, update scripts, update directives
 3. Never modify `execution/prompts.py` without permission
 4. Be concise
+5. **Log costs**: Any action that incurs a cost (API calls, Apify, LLM tokens, etc.) must be logged to the speed_to_lead database. See CROSS_REPO.md "Cost Tracking" section.
 
 ## Cross-Repo Knowledge Sharing
 

@@ -32,7 +32,13 @@ from draft_storage import (
     save_insight_to_bank, get_insights_bank, get_insight, update_insight,
     delete_insight_from_bank, seed_insights_if_empty,
     save_social_proof, get_social_proof_bank, get_social_proof, update_social_proof,
-    delete_social_proof, seed_social_proof_if_empty
+    delete_social_proof, seed_social_proof_if_empty,
+    COMPETITORS, POST_TYPES, save_competitor_post, get_competitor_posts,
+    update_competitor_post, delete_competitor_post, get_competitor_names,
+    get_competitor_stats,
+    TREND_STATUSES, TREND_PLATFORMS, save_trending_topic, get_trending_topics,
+    get_trending_topic, update_trending_topic, delete_trending_topic,
+    get_trending_stats, convert_trend_to_idea,
 )
 from image_storage import save_image, delete_image, list_images, get_image, get_image_url
 from generate_post import generate_post_body, load_knowledge_base
@@ -214,6 +220,8 @@ BASE_TEMPLATE = '''<!DOCTYPE html>
                 <a href="/hooks-bank" class="{{ 'active' if page == 'hooks-bank' else '' }}">Hooks</a>
                 <a href="/insights" class="{{ 'active' if page == 'insights' else '' }}">Insights</a>
                 <a href="/results" class="{{ 'active' if page == 'results' else '' }}">Results</a>
+                <a href="/trending" class="{{ 'active' if page == 'trending' else '' }}">Trending</a>
+                <a href="/competitors" class="{{ 'active' if page == 'competitors' else '' }}">Competitors</a>
                 <a href="/images" class="{{ 'active' if page == 'images' else '' }}">Images</a>
                 <a href="/settings" class="{{ 'active' if page == 'settings' else '' }}">Settings</a>
             </nav>
@@ -1151,6 +1159,313 @@ function toggleResultEdit(id) {
 </script>
 {% endblock %}'''
 
+COMPETITORS_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Competitor Posts</h2>
+    <p style="color: #666; margin-bottom: 15px;">Track and analyze LinkedIn posts from competitors. Paste posts you find interesting and let AI extract hooks, classify types, and write analysis notes.</p>
+
+    {% if stats.total > 0 %}
+    <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div style="background: #e8f4f8; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #0077b5;">{{ stats.total }}</div>
+            <div style="font-size: 12px; color: #666;">Total Posts</div>
+        </div>
+        {% if stats.top_performer %}
+        <div style="background: #d4edda; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 16px; font-weight: 700; color: #155724;">{{ stats.top_performer }}</div>
+            <div style="font-size: 12px; color: #666;">Most Tracked</div>
+        </div>
+        {% endif %}
+        {% if stats.most_common_type %}
+        <div style="background: #fff3cd; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 16px; font-weight: 700; color: #856404;">{{ stats.most_common_type }}</div>
+            <div style="font-size: 12px; color: #666;">Most Common Type</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('add-competitor-form').style.display = document.getElementById('add-competitor-form').style.display === 'none' ? 'block' : 'none'">+ Add Post</button>
+
+        <span style="margin-left: 10px; color: #666;">Filter:</span>
+        <select onchange="applyFilters()" id="filter-competitor" style="width: auto; margin-bottom: 0;">
+            <option value="">All Competitors</option>
+            {% for name in competitor_names %}
+            <option value="{{ name }}" {{ 'selected' if current_competitor == name else '' }}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <select onchange="applyFilters()" id="filter-type" style="width: auto; margin-bottom: 0;">
+            <option value="">All Types</option>
+            {% for t in post_types %}
+            <option value="{{ t }}" {{ 'selected' if current_type == t else '' }}>{{ t }}</option>
+            {% endfor %}
+        </select>
+        <select onchange="applyFilters()" id="filter-performance" style="width: auto; margin-bottom: 0;">
+            <option value="">All Performance</option>
+            <option value="high" {{ 'selected' if current_performance == 'high' else '' }}>High</option>
+            <option value="medium" {{ 'selected' if current_performance == 'medium' else '' }}>Medium</option>
+            <option value="low" {{ 'selected' if current_performance == 'low' else '' }}>Low</option>
+        </select>
+    </div>
+
+    <div id="add-competitor-form" style="display: none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+        <h3 style="margin-bottom: 10px; color: #0077b5;">Add Competitor Post</h3>
+        <form action="/competitors/add" method="POST" id="competitor-add-form">
+            <label>Competitor</label>
+            <select name="competitor_name" required>
+                <option value="">Select competitor...</option>
+                {% for name in competitor_names %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <label>Post Content (paste the full post)</label>
+            <textarea name="post_content" id="new-post-content" rows="8" placeholder="Paste the LinkedIn post here..." required></textarea>
+            <div class="grid-2">
+                <div>
+                    <label>Hook (opening line)</label>
+                    <input type="text" name="hook" id="new-hook" placeholder="Will be auto-filled by AI analysis">
+                </div>
+                <div>
+                    <label>Post Type</label>
+                    <select name="post_type" id="new-post-type">
+                        <option value="">Select type...</option>
+                        {% for t in post_types %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <label>Notes</label>
+            <textarea name="notes" id="new-notes" rows="3" placeholder="What makes this post effective? (auto-filled by AI)"></textarea>
+            <div class="grid-2">
+                <div>
+                    <label>Post URL</label>
+                    <input type="text" name="post_url" placeholder="https://linkedin.com/posts/...">
+                </div>
+                <div>
+                    <label>Date Posted</label>
+                    <input type="text" name="date_posted" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Likes</label>
+                    <input type="number" name="likes" placeholder="0">
+                </div>
+                <div>
+                    <label>Comments</label>
+                    <input type="number" name="comments" placeholder="0">
+                </div>
+                <div>
+                    <label>Reposts</label>
+                    <input type="number" name="reposts" placeholder="0">
+                </div>
+                <div>
+                    <label>Performance</label>
+                    <select name="performance">
+                        <option value="">—</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="autoAnalyze()" id="analyze-btn">Auto-Analyze with AI</button>
+                <button type="submit" class="btn btn-primary">Save Post</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-competitor-form').style.display='none'">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    {% if posts %}
+        {% set colors = {'Aidan Collins': '#0077b5', 'Cameron Trew': '#28a745', 'Naim Ahmed': '#dc3545', 'Lara Acosta': '#6f42c1', 'Chase Dimond': '#fd7e14'} %}
+        {% for post in posts %}
+        <div class="draft-item" id="post-{{ post.id }}" style="border-left: 4px solid {{ colors.get(post.competitor_name, '#6c757d') }};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                    <span style="font-weight: 700; color: {{ colors.get(post.competitor_name, '#333') }};">{{ post.competitor_name }}</span>
+                    {% if post.post_type %}<span style="background: #e8f4f8; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">{{ post.post_type }}</span>{% endif %}
+                    {% if post.performance %}<span style="background: {% if post.performance == 'high' %}#d4edda{% elif post.performance == 'medium' %}#fff3cd{% else %}#f8d7da{% endif %}; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 4px;">{{ post.performance }}</span>{% endif %}
+                </div>
+                <div style="text-align: right; color: #888; font-size: 12px;">
+                    {% if post.date_posted %}{{ post.date_posted }}{% else %}{{ post.created_at[:10] }}{% endif %}
+                </div>
+            </div>
+
+            {% if post.hook %}
+            <div style="background: #f0f7ff; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-weight: 600; font-size: 15px; border-left: 3px solid {{ colors.get(post.competitor_name, '#0077b5') }};">{{ post.hook }}</div>
+            {% endif %}
+
+            {% if post.likes is not none or post.comments is not none or post.reposts is not none %}
+            <div style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; color: #666;">
+                {% if post.likes is not none %}<span>👍 {{ post.likes }}</span>{% endif %}
+                {% if post.comments is not none %}<span>💬 {{ post.comments }}</span>{% endif %}
+                {% if post.reposts is not none %}<span>🔁 {{ post.reposts }}</span>{% endif %}
+            </div>
+            {% endif %}
+
+            <div class="comp-view-{{ post.id }}">
+                <div style="max-height: 100px; overflow: hidden; position: relative; font-size: 14px; color: #555; white-space: pre-wrap;" id="content-preview-{{ post.id }}">{{ post.post_content }}</div>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleContent('{{ post.id }}')" id="toggle-btn-{{ post.id }}" style="margin-top: 5px;">Show more</button>
+
+                {% if post.notes %}
+                <div style="margin-top: 10px; padding: 10px; background: #fffbf0; border-radius: 4px; font-size: 13px; color: #666;"><strong>Notes:</strong> {{ post.notes }}</div>
+                {% endif %}
+
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="toggleCompEdit('{{ post.id }}')">Edit</button>
+                    <form action="/competitors/delete/{{ post.id }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this post?')">Delete</button>
+                    </form>
+                    {% if post.post_url %}<a href="{{ post.post_url }}" target="_blank" class="btn btn-secondary btn-sm">View on LinkedIn</a>{% endif %}
+                </div>
+            </div>
+
+            <div class="comp-edit-{{ post.id }}" style="display: none;">
+                <form action="/competitors/update/{{ post.id }}" method="POST">
+                    <label>Competitor</label>
+                    <select name="competitor_name">
+                        {% for name in competitor_names %}
+                        <option value="{{ name }}" {{ 'selected' if post.competitor_name == name else '' }}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label>Post Content</label>
+                    <textarea name="post_content" rows="6">{{ post.post_content }}</textarea>
+                    <div class="grid-2">
+                        <div>
+                            <label>Hook</label>
+                            <input type="text" name="hook" value="{{ post.hook or '' }}">
+                        </div>
+                        <div>
+                            <label>Post Type</label>
+                            <select name="post_type">
+                                <option value="">Select type...</option>
+                                {% for t in post_types %}
+                                <option value="{{ t }}" {{ 'selected' if post.post_type == t else '' }}>{{ t }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <label>Notes</label>
+                    <textarea name="notes" rows="3">{{ post.notes or '' }}</textarea>
+                    <div class="grid-2">
+                        <div>
+                            <label>Post URL</label>
+                            <input type="text" name="post_url" value="{{ post.post_url or '' }}">
+                        </div>
+                        <div>
+                            <label>Date Posted</label>
+                            <input type="text" name="date_posted" value="{{ post.date_posted or '' }}">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Likes</label>
+                            <input type="number" name="likes" value="{{ post.likes if post.likes is not none else '' }}">
+                        </div>
+                        <div>
+                            <label>Comments</label>
+                            <input type="number" name="comments" value="{{ post.comments if post.comments is not none else '' }}">
+                        </div>
+                        <div>
+                            <label>Reposts</label>
+                            <input type="number" name="reposts" value="{{ post.reposts if post.reposts is not none else '' }}">
+                        </div>
+                        <div>
+                            <label>Performance</label>
+                            <select name="performance">
+                                <option value="">—</option>
+                                <option value="high" {{ 'selected' if post.performance == 'high' else '' }}>High</option>
+                                <option value="medium" {{ 'selected' if post.performance == 'medium' else '' }}>Medium</option>
+                                <option value="low" {{ 'selected' if post.performance == 'low' else '' }}>Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCompEdit('{{ post.id }}')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #666;">No competitor posts yet. Add your first one above.</p>
+    {% endif %}
+</div>
+
+<script>
+function applyFilters() {
+    const comp = document.getElementById('filter-competitor').value;
+    const type = document.getElementById('filter-type').value;
+    const perf = document.getElementById('filter-performance').value;
+    const params = new URLSearchParams();
+    if (comp) params.set('competitor', comp);
+    if (type) params.set('type', type);
+    if (perf) params.set('performance', perf);
+    window.location.href = '/competitors' + (params.toString() ? '?' + params.toString() : '');
+}
+
+function toggleCompEdit(id) {
+    const view = document.querySelector('.comp-view-' + id);
+    const edit = document.querySelector('.comp-edit-' + id);
+    if (edit.style.display === 'none') {
+        view.style.display = 'none';
+        edit.style.display = 'block';
+    } else {
+        view.style.display = 'block';
+        edit.style.display = 'none';
+    }
+}
+
+function toggleContent(id) {
+    const el = document.getElementById('content-preview-' + id);
+    const btn = document.getElementById('toggle-btn-' + id);
+    if (el.style.maxHeight === 'none') {
+        el.style.maxHeight = '100px';
+        btn.textContent = 'Show more';
+    } else {
+        el.style.maxHeight = 'none';
+        btn.textContent = 'Show less';
+    }
+}
+
+async function autoAnalyze() {
+    const content = document.getElementById('new-post-content').value;
+    if (!content.trim()) { alert('Paste a post first.'); return; }
+
+    const btn = document.getElementById('analyze-btn');
+    btn.textContent = 'Analyzing...';
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch('/competitors/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_content: content})
+        });
+        const data = await resp.json();
+        if (data.hook) document.getElementById('new-hook').value = data.hook;
+        if (data.post_type) {
+            const sel = document.getElementById('new-post-type');
+            for (const opt of sel.options) {
+                if (opt.value === data.post_type) { opt.selected = true; break; }
+            }
+        }
+        if (data.notes) document.getElementById('new-notes').value = data.notes;
+    } catch (e) {
+        alert('Analysis failed: ' + e.message);
+    } finally {
+        btn.textContent = 'Auto-Analyze with AI';
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}'''
+
 IMAGES_LIBRARY_CONTENT = '''{% extends "base.html" %}
 {% block content %}
 <div class="card">
@@ -1330,6 +1645,169 @@ function selectDate(date) {
 </script>
 {% endblock %}'''
 
+TRENDING_CONTENT = '''{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Trending Topics</h2>
+    <p style="color: #666; margin-bottom: 15px;">Discover trending topics relevant to B2B founders, coaches, and consultants. Powered by Perplexity Sonar + Claude ICP scoring.</p>
+
+    {% if stats.total > 0 %}
+    <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div style="background: #e8f4f8; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #0077b5;">{{ stats.total }}</div>
+            <div style="font-size: 12px; color: #666;">Total Topics</div>
+        </div>
+        <div style="background: #d4edda; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #155724;">{{ stats.new_count }}</div>
+            <div style="font-size: 12px; color: #666;">New</div>
+        </div>
+        <div style="background: #fff3cd; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #856404;">{{ stats.avg_relevance }}</div>
+            <div style="font-size: 12px; color: #666;">Avg Relevance</div>
+        </div>
+        {% if stats.top_platform %}
+        <div style="background: #e2e3f1; padding: 12px 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 16px; font-weight: 700; color: #383d6e;">{{ stats.top_platform }}</div>
+            <div style="font-size: 12px; color: #666;">Top Platform</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button type="button" class="btn btn-primary" onclick="runTrendScout()" id="scan-btn">Run Trend Scout</button>
+
+        <span style="margin-left: 10px; color: #666;">Filter:</span>
+        <select onchange="applyTrendFilters()" id="filter-status" style="width: auto; margin-bottom: 0;">
+            <option value="">All Statuses</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {{ 'selected' if current_status == s else '' }}>{{ s|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <select onchange="applyTrendFilters()" id="filter-platform" style="width: auto; margin-bottom: 0;">
+            <option value="">All Platforms</option>
+            {% for p in platforms %}
+            <option value="{{ p }}" {{ 'selected' if current_platform == p else '' }}>{{ p|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <select onchange="applyTrendFilters()" id="filter-relevance" style="width: auto; margin-bottom: 0;">
+            <option value="">Any Relevance</option>
+            <option value="8" {{ 'selected' if current_min_relevance == '8' else '' }}>8+ (High)</option>
+            <option value="6" {{ 'selected' if current_min_relevance == '6' else '' }}>6+ (Medium)</option>
+            <option value="5" {{ 'selected' if current_min_relevance == '5' else '' }}>5+ (All)</option>
+        </select>
+    </div>
+
+    {% for topic in topics %}
+    <div class="draft-item" style="border-left: 4px solid {% if topic.relevance_score and topic.relevance_score >= 8 %}#28a745{% elif topic.relevance_score and topic.relevance_score >= 5 %}#ffc107{% else %}#adb5bd{% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <strong style="font-size: 16px;">{{ topic.topic }}</strong>
+                    {% if topic.relevance_score %}
+                    <span style="background: {% if topic.relevance_score >= 8 %}#d4edda; color: #155724{% elif topic.relevance_score >= 5 %}#fff3cd; color: #856404{% else %}#e2e3e5; color: #383d41{% endif %}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                        {{ topic.relevance_score }}/10
+                    </span>
+                    {% endif %}
+                    {% if topic.source_platform %}
+                    <span style="background: #e2e3f1; color: #383d6e; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                        {{ topic.source_platform }}
+                    </span>
+                    {% endif %}
+                    <span style="background: {% if topic.status == 'new' %}#cce5ff; color: #004085{% elif topic.status == 'reviewed' %}#d4edda; color: #155724{% elif topic.status == 'used' %}#d1ecf1; color: #0c5460{% else %}#e2e3e5; color: #383d41{% endif %}; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                        {{ topic.status }}
+                    </span>
+                </div>
+                {% if topic.summary %}
+                <p style="color: #555; margin-bottom: 8px; font-size: 14px;">{{ topic.summary }}</p>
+                {% endif %}
+                {% if topic.content_angles %}
+                <div style="margin-bottom: 8px;">
+                    <strong style="font-size: 12px; color: #666;">Content Angles:</strong>
+                    <ul style="margin: 4px 0 0 20px; font-size: 13px; color: #555;">
+                        {% for angle in topic.content_angles %}
+                        <li>{{ angle }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if topic.source_urls %}
+                <div style="font-size: 12px; color: #888;">
+                    Sources:
+                    {% for url in topic.source_urls[:3] %}
+                    <a href="{{ url }}" target="_blank" style="color: #0077b5; margin-right: 8px;">{{ url[:50] }}...</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div style="display: flex; gap: 5px; flex-shrink: 0; margin-left: 10px;">
+                {% if topic.status != 'used' %}
+                <form action="/trending/convert/{{ topic.id }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-success btn-sm" title="Convert to Idea">To Idea</button>
+                </form>
+                {% endif %}
+                {% if topic.status != 'dismissed' %}
+                <form action="/trending/dismiss/{{ topic.id }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Dismiss</button>
+                </form>
+                {% endif %}
+                <button type="button" class="btn btn-sm" style="background: #e9ecef;" onclick="toggleTrendNotes('{{ topic.id }}')">Notes</button>
+                <form action="/trending/delete/{{ topic.id }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this topic?')">Delete</button>
+                </form>
+            </div>
+        </div>
+        <div id="notes-{{ topic.id }}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+            <form action="/trending/update/{{ topic.id }}" method="POST">
+                <textarea name="notes" rows="2" placeholder="Add notes...">{{ topic.notes or '' }}</textarea>
+                <button type="submit" class="btn btn-primary btn-sm">Save Notes</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p style="color: #666;">No trending topics yet. Click "Run Trend Scout" to discover what's hot.</p>
+    {% endfor %}
+</div>
+
+<script>
+function applyTrendFilters() {
+    const params = new URLSearchParams();
+    const status = document.getElementById('filter-status').value;
+    const platform = document.getElementById('filter-platform').value;
+    const relevance = document.getElementById('filter-relevance').value;
+    if (status) params.set('status', status);
+    if (platform) params.set('platform', platform);
+    if (relevance) params.set('min_relevance', relevance);
+    window.location.href = '/trending' + (params.toString() ? '?' + params.toString() : '');
+}
+
+function toggleTrendNotes(id) {
+    const el = document.getElementById('notes-' + id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function runTrendScout() {
+    const btn = document.getElementById('scan-btn');
+    btn.textContent = 'Scanning... (this takes ~30s)';
+    btn.disabled = true;
+    try {
+        const resp = await fetch('/trending/scan', {method: 'POST'});
+        const data = await resp.json();
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            window.location.href = '/trending?message=Found+' + data.topics_saved + '+trending+topics&msg_type=success&batch=' + data.batch_id;
+        }
+    } catch (e) {
+        alert('Scan failed: ' + e.message);
+    } finally {
+        btn.textContent = 'Run Trend Scout';
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}'''
+
 # Write templates
 def setup_templates():
     (TEMPLATES_DIR / "base.html").write_text(BASE_TEMPLATE, encoding="utf-8")
@@ -1346,6 +1824,8 @@ def setup_templates():
     (TEMPLATES_DIR / "images_library.html").write_text(IMAGES_LIBRARY_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "insights.html").write_text(INSIGHTS_CONTENT, encoding="utf-8")
     (TEMPLATES_DIR / "results.html").write_text(RESULTS_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "competitors.html").write_text(COMPETITORS_CONTENT, encoding="utf-8")
+    (TEMPLATES_DIR / "trending.html").write_text(TRENDING_CONTENT, encoding="utf-8")
 
 # Initialize DB tables, migrate JSON data, seed insights
 from database import create_tables, migrate_json_to_db
@@ -1784,6 +2264,201 @@ async def update_result_route(
 async def delete_result_route(proof_id: str):
     delete_social_proof(proof_id)
     return RedirectResponse(url="/results?message=Result+deleted&type=success", status_code=303)
+
+
+# =============================================================================
+# COMPETITOR POSTS ROUTES
+# =============================================================================
+
+@app.get("/competitors", response_class=HTMLResponse)
+async def competitors_page(
+    request: Request,
+    competitor: str = None,
+    type: str = None,
+    performance: str = None,
+    message: str = None,
+    msg_type: str = None,
+):
+    posts = get_competitor_posts(
+        competitor_name=competitor or None,
+        post_type=type or None,
+        performance=performance or None,
+    )
+    stats = get_competitor_stats()
+    return templates.TemplateResponse("competitors.html", {
+        "request": request,
+        "page": "competitors",
+        "posts": posts,
+        "stats": stats,
+        "competitor_names": get_competitor_names(),
+        "post_types": POST_TYPES,
+        "current_competitor": competitor,
+        "current_type": type,
+        "current_performance": performance,
+        "message": message,
+        "message_type": msg_type,
+    })
+
+
+@app.post("/competitors/add")
+async def add_competitor_post_route(
+    competitor_name: str = Form(...),
+    post_content: str = Form(...),
+    hook: str = Form(""),
+    post_type: str = Form(""),
+    post_url: str = Form(""),
+    date_posted: str = Form(""),
+    likes: str = Form(""),
+    comments: str = Form(""),
+    reposts: str = Form(""),
+    performance: str = Form(""),
+    notes: str = Form(""),
+):
+    save_competitor_post(
+        competitor_name=competitor_name,
+        post_content=post_content,
+        hook=hook.strip() or None,
+        post_type=post_type.strip() or None,
+        post_url=post_url.strip() or None,
+        date_posted=date_posted.strip() or None,
+        likes=int(likes) if likes.strip() else None,
+        comments=int(comments) if comments.strip() else None,
+        reposts=int(reposts) if reposts.strip() else None,
+        performance=performance.strip() or None,
+        notes=notes.strip() or None,
+    )
+    return RedirectResponse(url="/competitors?message=Post+added&msg_type=success", status_code=303)
+
+
+@app.post("/competitors/update/{post_id}")
+async def update_competitor_post_route(
+    post_id: str,
+    competitor_name: str = Form(...),
+    post_content: str = Form(...),
+    hook: str = Form(""),
+    post_type: str = Form(""),
+    post_url: str = Form(""),
+    date_posted: str = Form(""),
+    likes: str = Form(""),
+    comments: str = Form(""),
+    reposts: str = Form(""),
+    performance: str = Form(""),
+    notes: str = Form(""),
+):
+    update_competitor_post(
+        post_id,
+        competitor_name=competitor_name,
+        post_content=post_content,
+        hook=hook.strip() or None,
+        post_type=post_type.strip() or None,
+        post_url=post_url.strip() or None,
+        date_posted=date_posted.strip() or None,
+        likes=int(likes) if likes.strip() else None,
+        comments=int(comments) if comments.strip() else None,
+        reposts=int(reposts) if reposts.strip() else None,
+        performance=performance.strip() or None,
+        notes=notes.strip() or None,
+    )
+    return RedirectResponse(url="/competitors?message=Post+updated&msg_type=success", status_code=303)
+
+
+@app.post("/competitors/delete/{post_id}")
+async def delete_competitor_post_route(post_id: str):
+    delete_competitor_post(post_id)
+    return RedirectResponse(url="/competitors?message=Post+deleted&msg_type=success", status_code=303)
+
+
+# =============================================================================
+# TRENDING TOPICS ROUTES
+# =============================================================================
+
+@app.get("/trending", response_class=HTMLResponse)
+async def trending_page(
+    request: Request,
+    status: str = None,
+    platform: str = None,
+    min_relevance: str = None,
+    batch: str = None,
+    message: str = None,
+    msg_type: str = None,
+):
+    topics = get_trending_topics(
+        status=status or None,
+        source_platform=platform or None,
+        min_relevance=int(min_relevance) if min_relevance else None,
+        batch_id=batch or None,
+    )
+    stats = get_trending_stats()
+    return templates.TemplateResponse("trending.html", {
+        "request": request,
+        "page": "trending",
+        "topics": topics,
+        "stats": stats,
+        "statuses": TREND_STATUSES,
+        "platforms": TREND_PLATFORMS,
+        "current_status": status,
+        "current_platform": platform,
+        "current_min_relevance": min_relevance,
+        "message": message,
+        "message_type": msg_type,
+    })
+
+
+@app.post("/trending/scan")
+async def trending_scan():
+    try:
+        from trend_scout import run_trend_scout
+        result = run_trend_scout()
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/trending/convert/{topic_id}")
+async def trending_convert(topic_id: str):
+    idea = convert_trend_to_idea(topic_id)
+    if idea:
+        return RedirectResponse(
+            url="/trending?message=Converted+to+idea&msg_type=success", status_code=303
+        )
+    return RedirectResponse(
+        url="/trending?message=Topic+not+found&msg_type=error", status_code=303
+    )
+
+
+@app.post("/trending/dismiss/{topic_id}")
+async def trending_dismiss(topic_id: str):
+    update_trending_topic(topic_id, status="dismissed")
+    return RedirectResponse(
+        url="/trending?message=Topic+dismissed&msg_type=success", status_code=303
+    )
+
+
+@app.post("/trending/update/{topic_id}")
+async def trending_update(topic_id: str, notes: str = Form("")):
+    update_trending_topic(topic_id, notes=notes.strip() or None)
+    return RedirectResponse(
+        url="/trending?message=Notes+updated&msg_type=success", status_code=303
+    )
+
+
+@app.post("/trending/delete/{topic_id}")
+async def trending_delete(topic_id: str):
+    delete_trending_topic(topic_id)
+    return RedirectResponse(
+        url="/trending?message=Topic+deleted&msg_type=success", status_code=303
+    )
+
+
+@app.post("/competitors/analyze")
+async def analyze_competitor_post_route(request: Request):
+    from analyze_competitor_post import analyze_post
+    body = await request.json()
+    post_content = body.get("post_content", "")
+    if not post_content.strip():
+        return JSONResponse({"error": "No content provided"}, status_code=400)
+    result = analyze_post(post_content)
+    return JSONResponse(result)
 
 
 @app.get("/edit/{draft_id}", response_class=HTMLResponse)

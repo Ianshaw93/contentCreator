@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 import uuid
 
-from database import SessionLocal, Draft, Hook, Idea, Insight, SocialProof
+from database import SessionLocal, Draft, Hook, Idea, Insight, SocialProof, CompetitorPost, TrendingTopic
 
 
 # =============================================================================
@@ -714,6 +714,331 @@ def seed_social_proof_if_empty() -> int:
         save_social_proof(**seed)
 
     return len(seeds)
+
+
+# =============================================================================
+# COMPETITOR POSTS
+# =============================================================================
+
+COMPETITORS = [
+    {"name": "Aidan Collins", "linkedin_url": "https://www.linkedin.com/in/aidancollins/"},
+    {"name": "Cameron Trew", "linkedin_url": "https://www.linkedin.com/in/camerontrew/"},
+    {"name": "Naim Ahmed", "linkedin_url": "https://www.linkedin.com/in/naimahmed/"},
+    {"name": "Lara Acosta", "linkedin_url": "https://www.linkedin.com/in/laraacosta/"},
+    {"name": "Chase Dimond", "linkedin_url": "https://www.linkedin.com/in/chasedimond/"},
+]
+
+POST_TYPES = [
+    "Story", "List", "Contrarian", "How-to", "Personal", "Case Study",
+    "Lesson", "Framework", "Question", "Carousel", "Poll", "Hot Take",
+    "Before/After", "Myth-busting", "Thread",
+]
+
+
+def _competitor_post_to_dict(row: CompetitorPost) -> dict:
+    return {
+        "id": row.id,
+        "competitor_name": row.competitor_name,
+        "competitor_linkedin_url": row.competitor_linkedin_url,
+        "post_content": row.post_content,
+        "hook": row.hook,
+        "post_type": row.post_type,
+        "post_url": row.post_url,
+        "likes": row.likes,
+        "comments": row.comments,
+        "reposts": row.reposts,
+        "performance": row.performance,
+        "date_posted": row.date_posted,
+        "notes": row.notes,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+    }
+
+
+def save_competitor_post(
+    competitor_name: str,
+    post_content: str,
+    hook: str = None,
+    post_type: str = None,
+    post_url: str = None,
+    likes: int = None,
+    comments: int = None,
+    reposts: int = None,
+    performance: str = None,
+    date_posted: str = None,
+    notes: str = None,
+) -> dict:
+    """Save a competitor post."""
+    now = datetime.now().isoformat()
+    # Look up LinkedIn URL from COMPETITORS list
+    linkedin_url = None
+    for c in COMPETITORS:
+        if c["name"] == competitor_name:
+            linkedin_url = c["linkedin_url"]
+            break
+
+    entry = CompetitorPost(
+        id=str(uuid.uuid4())[:8],
+        competitor_name=competitor_name,
+        competitor_linkedin_url=linkedin_url,
+        post_content=post_content,
+        hook=hook,
+        post_type=post_type,
+        post_url=post_url,
+        likes=likes,
+        comments=comments,
+        reposts=reposts,
+        performance=performance,
+        date_posted=date_posted,
+        notes=notes,
+        created_at=now,
+        updated_at=now,
+    )
+    with SessionLocal() as db:
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return _competitor_post_to_dict(entry)
+
+
+def get_competitor_posts(
+    competitor_name: str = None,
+    post_type: str = None,
+    performance: str = None,
+) -> list[dict]:
+    """Get competitor posts with optional filters."""
+    with SessionLocal() as db:
+        query = db.query(CompetitorPost).order_by(CompetitorPost.created_at.desc())
+        if competitor_name:
+            query = query.filter(CompetitorPost.competitor_name == competitor_name)
+        if post_type:
+            query = query.filter(CompetitorPost.post_type == post_type)
+        if performance:
+            query = query.filter(CompetitorPost.performance == performance)
+        return [_competitor_post_to_dict(r) for r in query.all()]
+
+
+def update_competitor_post(post_id: str, **updates) -> Optional[dict]:
+    """Update a competitor post."""
+    with SessionLocal() as db:
+        row = db.query(CompetitorPost).filter(CompetitorPost.id == post_id).first()
+        if not row:
+            return None
+        allowed_fields = {
+            "competitor_name", "post_content", "hook", "post_type", "post_url",
+            "likes", "comments", "reposts", "performance", "date_posted", "notes",
+        }
+        for key, value in updates.items():
+            if key in allowed_fields:
+                setattr(row, key, value)
+        row.updated_at = datetime.now().isoformat()
+        db.commit()
+        db.refresh(row)
+        return _competitor_post_to_dict(row)
+
+
+def delete_competitor_post(post_id: str) -> bool:
+    """Delete a competitor post."""
+    with SessionLocal() as db:
+        row = db.query(CompetitorPost).filter(CompetitorPost.id == post_id).first()
+        if not row:
+            return False
+        db.delete(row)
+        db.commit()
+        return True
+
+
+def get_competitor_names() -> list[str]:
+    """Return list of competitor names."""
+    return [c["name"] for c in COMPETITORS]
+
+
+def get_competitor_stats() -> dict:
+    """Get summary stats across all competitor posts."""
+    posts = get_competitor_posts()
+    if not posts:
+        return {"total": 0, "top_performer": None, "most_common_type": None}
+
+    # Count posts per competitor
+    name_counts = {}
+    for p in posts:
+        name_counts[p["competitor_name"]] = name_counts.get(p["competitor_name"], 0) + 1
+    top_performer = max(name_counts, key=name_counts.get) if name_counts else None
+
+    # Count post types
+    type_counts = {}
+    for p in posts:
+        if p.get("post_type"):
+            type_counts[p["post_type"]] = type_counts.get(p["post_type"], 0) + 1
+    most_common_type = max(type_counts, key=type_counts.get) if type_counts else None
+
+    return {
+        "total": len(posts),
+        "top_performer": top_performer,
+        "most_common_type": most_common_type,
+    }
+
+
+# =============================================================================
+# TRENDING TOPICS
+# =============================================================================
+
+TREND_STATUSES = ["new", "reviewed", "used", "dismissed"]
+TREND_PLATFORMS = ["reddit", "twitter", "linkedin", "web"]
+
+
+def _trending_topic_to_dict(row: TrendingTopic) -> dict:
+    return {
+        "id": row.id,
+        "topic": row.topic,
+        "summary": row.summary,
+        "source_urls": row.source_urls or [],
+        "relevance_score": row.relevance_score,
+        "content_angles": row.content_angles or [],
+        "search_query": row.search_query,
+        "batch_id": row.batch_id,
+        "status": row.status or "new",
+        "source_platform": row.source_platform,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+        "notes": row.notes,
+    }
+
+
+def save_trending_topic(
+    topic: str,
+    summary: str = None,
+    source_urls: list = None,
+    relevance_score: int = None,
+    content_angles: list = None,
+    search_query: str = None,
+    batch_id: str = None,
+    source_platform: str = None,
+    notes: str = None,
+) -> dict:
+    """Save a trending topic."""
+    now = datetime.now().isoformat()
+    entry = TrendingTopic(
+        id=str(uuid.uuid4())[:8],
+        topic=topic,
+        summary=summary,
+        source_urls=source_urls or [],
+        relevance_score=relevance_score,
+        content_angles=content_angles or [],
+        search_query=search_query,
+        batch_id=batch_id,
+        status="new",
+        source_platform=source_platform,
+        created_at=now,
+        updated_at=now,
+        notes=notes,
+    )
+    with SessionLocal() as db:
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return _trending_topic_to_dict(entry)
+
+
+def get_trending_topics(
+    status: str = None,
+    source_platform: str = None,
+    min_relevance: int = None,
+    batch_id: str = None,
+) -> list[dict]:
+    """Get trending topics with optional filters."""
+    with SessionLocal() as db:
+        query = db.query(TrendingTopic).order_by(TrendingTopic.created_at.desc())
+        if status:
+            query = query.filter(TrendingTopic.status == status)
+        if source_platform:
+            query = query.filter(TrendingTopic.source_platform == source_platform)
+        if min_relevance is not None:
+            query = query.filter(TrendingTopic.relevance_score >= min_relevance)
+        if batch_id:
+            query = query.filter(TrendingTopic.batch_id == batch_id)
+        return [_trending_topic_to_dict(r) for r in query.all()]
+
+
+def get_trending_topic(topic_id: str) -> Optional[dict]:
+    """Get a single trending topic by ID."""
+    with SessionLocal() as db:
+        row = db.query(TrendingTopic).filter(TrendingTopic.id == topic_id).first()
+        return _trending_topic_to_dict(row) if row else None
+
+
+def update_trending_topic(topic_id: str, **updates) -> Optional[dict]:
+    """Update a trending topic."""
+    with SessionLocal() as db:
+        row = db.query(TrendingTopic).filter(TrendingTopic.id == topic_id).first()
+        if not row:
+            return None
+        allowed_fields = {
+            "topic", "summary", "source_urls", "relevance_score",
+            "content_angles", "search_query", "batch_id", "status",
+            "source_platform", "notes",
+        }
+        for key, value in updates.items():
+            if key in allowed_fields:
+                setattr(row, key, value)
+        row.updated_at = datetime.now().isoformat()
+        db.commit()
+        db.refresh(row)
+        return _trending_topic_to_dict(row)
+
+
+def delete_trending_topic(topic_id: str) -> bool:
+    """Delete a trending topic."""
+    with SessionLocal() as db:
+        row = db.query(TrendingTopic).filter(TrendingTopic.id == topic_id).first()
+        if not row:
+            return False
+        db.delete(row)
+        db.commit()
+        return True
+
+
+def get_trending_stats() -> dict:
+    """Get summary stats for trending topics."""
+    topics = get_trending_topics()
+    if not topics:
+        return {"total": 0, "new_count": 0, "avg_relevance": 0, "top_platform": None}
+
+    new_count = sum(1 for t in topics if t["status"] == "new")
+    scores = [t["relevance_score"] for t in topics if t["relevance_score"] is not None]
+    avg_relevance = round(sum(scores) / len(scores), 1) if scores else 0
+
+    platform_counts = {}
+    for t in topics:
+        if t.get("source_platform"):
+            platform_counts[t["source_platform"]] = platform_counts.get(t["source_platform"], 0) + 1
+    top_platform = max(platform_counts, key=platform_counts.get) if platform_counts else None
+
+    return {
+        "total": len(topics),
+        "new_count": new_count,
+        "avg_relevance": avg_relevance,
+        "top_platform": top_platform,
+    }
+
+
+def convert_trend_to_idea(topic_id: str) -> Optional[dict]:
+    """Convert a trending topic into an Idea and mark the trend as 'used'."""
+    trend = get_trending_topic(topic_id)
+    if not trend:
+        return None
+
+    angles = trend.get("content_angles", [])
+    angle_text = angles[0] if angles else None
+
+    idea = save_idea_to_bank(
+        idea=trend["topic"],
+        topic=f"Trending: {trend.get('source_platform', 'web')}",
+        angle=angle_text,
+    )
+
+    update_trending_topic(topic_id, status="used")
+    return idea
 
 
 if __name__ == "__main__":

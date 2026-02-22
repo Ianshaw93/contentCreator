@@ -93,6 +93,44 @@ class SocialProof(Base):
     updated_at = Column(String, nullable=False)
 
 
+class CompetitorPost(Base):
+    __tablename__ = "competitor_posts"
+
+    id = Column(String, primary_key=True)
+    competitor_name = Column(String, nullable=False)
+    competitor_linkedin_url = Column(String, nullable=True)
+    post_content = Column(Text, nullable=False)
+    hook = Column(Text, nullable=True)
+    post_type = Column(String, nullable=True)
+    post_url = Column(String, nullable=True)
+    likes = Column(Integer, nullable=True)
+    comments = Column(Integer, nullable=True)
+    reposts = Column(Integer, nullable=True)
+    performance = Column(String, nullable=True)  # high / medium / low
+    date_posted = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+
+class TrendingTopic(Base):
+    __tablename__ = "trending_topics"
+
+    id = Column(String, primary_key=True)
+    topic = Column(Text, nullable=False)
+    summary = Column(Text)
+    source_urls = Column(JSON, default=list)
+    relevance_score = Column(Integer)         # 1-10 ICP relevance
+    content_angles = Column(JSON, default=list)
+    search_query = Column(String)
+    batch_id = Column(String)                 # Groups results from same run
+    status = Column(String, default="new")    # new/reviewed/used/dismissed
+    source_platform = Column(String)          # reddit/twitter/linkedin/web
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+    notes = Column(Text)
+
+
 # =============================================================================
 # HELPERS
 # =============================================================================
